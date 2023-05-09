@@ -6,15 +6,15 @@ import utime
 from cycleTimer import CycleTimer
 from picozero import pico_temp_sensor, pico_led
 
-ssid = '<your access point name>'
-wifiPass = '<your wifi password here>'
+ssid = '<AccessPointTest>'
+wifiPass = 'dingleberries'
 
 # onboard LED for testing timers with
 led = machine.Pin("LED",machine.Pin.OUT)
 
 solenoidPin = 16
-solenoidOnTime = 1
-solenoidOffTime = 59
+solenoidOnTime = 10
+solenoidOffTime = 590
 solenoidStartDelay = 0
 solenoidIncrement = 0.1
 solenoidLock = _thread.allocate_lock()
@@ -22,36 +22,83 @@ solenoidTimer = CycleTimer("Solenoid Timer", solenoidOnTime, solenoidOffTime, so
 
 # aa = air atomizing
 aaPumpPin = 15
-aaPumpOnTime = 1
-aaPumpOffTime = 59
+aaPumpOnTime = 10
+aaPumpOffTime = 590
 aaPumpStartDelay = 0
 aaPumpIncrement = 0.1
 aaPumpLock = _thread.allocate_lock()
-aaPumpTimer = CycleTimer("Air Atomizing Water Pump", aaPumpOnTime, aaPumpOffTime, aaPumpStartDelay, True, aaPumpPin)
+aaPumpTimer = CycleTimer("Air Atomizing Water Pump Timer", aaPumpOnTime, aaPumpOffTime, aaPumpStartDelay, True, aaPumpPin)
 
 # lpa = low pressure aeroponic
 lpaPumpPin = 17
-lpaPumpOnTime = 20
-lpaPumpOffTime = 580
+lpaPumpOnTime = 200
+lpaPumpOffTime = 5800
 lpaPumpStartDelay = 0
 lpaPumpIncrement = 1
 lpaPumpLock = _thread.allocate_lock()
-lpaPumpTimer = CycleTimer("Low Pressure Aeroponic Pump", lpaPumpOnTime, lpaPumpOffTime, lpaPumpStartDelay, True, lpaPumpPin)
+lpaPumpTimer = CycleTimer("Low Pressure Aeroponic Pump Timer", lpaPumpOnTime, lpaPumpOffTime, lpaPumpStartDelay, True, lpaPumpPin)
 
-testSolenoidOnTime = 1
-testSolenoidOffTime = 3
+testSolenoidOnTime = 10
+testSolenoidOffTime = 30
 testSolenoidStartDelay = 0
 
-testAaPumpOnTime = 1
-testAaPumpOffTime = 3
+testAaPumpOnTime = 10
+testAaPumpOffTime = 30
 testAaPumpStartDelay = 0
 
-testLpaPumpOnTime = 20
-testLpaPumpOffTime = 580
+testLpaPumpOnTime = 200
+testLpaPumpOffTime = 5800
 testLpaPumpStartDelay = 0
 
 testModeOn = False
-testModeLock = _thread.allocate_lock()
+
+def runTimers():
+    index = 0
+    while True:
+        solenoidLock.acquire()
+        solenoidTimer.tick()
+        solenoidLock.release()
+        
+        aaPumpLock.acquire()
+        aaPumpTimer.tick()
+        aaPumpLock.release()
+        
+        lpaPumpLock.acquire()
+        lpaPumpTimer.tick()
+        lpaPumpLock.release()
+        
+        index += 1
+        # sleep for a 100 milliseconds and go do it again
+        utime.sleep_ms(100)
+        # periodic logging so we know this thread is still running
+        if index % 50 == 0:
+            print(str(index / 10) + ' seconds')
+
+def swapAndReset():
+    solenoidLock.acquire()
+    
+    solenoidOnTime, testSolenoidOnTime = testSolenoidOnTime, solenoidOnTime
+    solenoidOffTime, testSolenoidOffTime = testSolenoidOffTime, solenoidOffTime
+    solenoidStartDelay, testSolenoidStartDelay = testSolenoidStartDelay, solenoidStartDelay
+    solenoidTimer.reinitialize(solenoidOnTime, solenoidOffTime, solenoidStartDelay)
+    
+    solenoidLock.release()
+    
+    aaPumpLock.acquire()
+    
+    aaPumpOnTime, testAaPumpOnTime = testAaPumpOnTime, aaPumpOnTime
+    aaPumpOffTime, testAaPumpOffTime = testAaPumpOffTime, aaPumpOffTime
+    aaPumpStartDelay, testAaPumpStartDelay = testAaPumpStartDelay, aaPumpStartDelay
+    
+    aaPumpLock.release()
+    
+    lpaPumpLock.acquire()
+    
+    lpaPumpOnTime, testLpaPumpOnTime = testLpaPumpOnTime, lpaPumpOnTime
+    lpaPumpOffTime, testLpaPumpOffTime = testLpaPumpOffTime, lpaPumpOffTime
+    lpaPumpStartDelay, testLpaPumpStartDelay = testLpaPumpStartDelay, lpaPumpStartDelay
+    
+    lpaPumpLock.release()
 
 accessPoint = network.WLAN(network.AP_IF)
 accessPoint.config(essid=ssid, password=wifiPass)
@@ -74,7 +121,11 @@ serverSocket.bind(serverAddress)
 serverSocket.listen(1)
 
 print('listening on', serverAddress)
+
 led.off()
+
+# timer handling thread on the other CPU, so we must lock when modifying them
+_thread.start_new_thread(runTimers, ())
 
 # Listen for connections
 while True:
@@ -190,7 +241,61 @@ while True:
                 lpaPumpTimer.reinitialize(lpaPumpOnTime, lpaPumpOffTime, lpaPumpStartDelay)
                 print('reinitializing LPA timer')
                 
-            lpaPumpLock.release()        
+            lpaPumpLock.release()
+        elif action == '/testModeOn?':
+            if testModeOn == False:
+                solenoidLock.acquire()
+    
+                solenoidOnTime, testSolenoidOnTime = testSolenoidOnTime, solenoidOnTime
+                solenoidOffTime, testSolenoidOffTime = testSolenoidOffTime, solenoidOffTime
+                solenoidStartDelay, testSolenoidStartDelay = testSolenoidStartDelay, solenoidStartDelay
+                solenoidTimer.reinitialize(solenoidOnTime, solenoidOffTime, solenoidStartDelay)
+                
+                solenoidLock.release()
+                
+                aaPumpLock.acquire()
+                
+                aaPumpOnTime, testAaPumpOnTime = testAaPumpOnTime, aaPumpOnTime
+                aaPumpOffTime, testAaPumpOffTime = testAaPumpOffTime, aaPumpOffTime
+                aaPumpStartDelay, testAaPumpStartDelay = testAaPumpStartDelay, aaPumpStartDelay
+                
+                aaPumpLock.release()
+                
+                lpaPumpLock.acquire()
+                
+                lpaPumpOnTime, testLpaPumpOnTime = testLpaPumpOnTime, lpaPumpOnTime
+                lpaPumpOffTime, testLpaPumpOffTime = testLpaPumpOffTime, lpaPumpOffTime
+                lpaPumpStartDelay, testLpaPumpStartDelay = testLpaPumpStartDelay, lpaPumpStartDelay
+                
+                lpaPumpLock.release()
+                testModeOn = True
+        elif action == '/testModeOff?':
+            if testModeOn == True:
+                solenoidLock.acquire()
+    
+                solenoidOnTime, testSolenoidOnTime = testSolenoidOnTime, solenoidOnTime
+                solenoidOffTime, testSolenoidOffTime = testSolenoidOffTime, solenoidOffTime
+                solenoidStartDelay, testSolenoidStartDelay = testSolenoidStartDelay, solenoidStartDelay
+                solenoidTimer.reinitialize(solenoidOnTime, solenoidOffTime, solenoidStartDelay)
+                
+                solenoidLock.release()
+                
+                aaPumpLock.acquire()
+                
+                aaPumpOnTime, testAaPumpOnTime = testAaPumpOnTime, aaPumpOnTime
+                aaPumpOffTime, testAaPumpOffTime = testAaPumpOffTime, aaPumpOffTime
+                aaPumpStartDelay, testAaPumpStartDelay = testAaPumpStartDelay, aaPumpStartDelay
+                
+                aaPumpLock.release()
+                
+                lpaPumpLock.acquire()
+                
+                lpaPumpOnTime, testLpaPumpOnTime = testLpaPumpOnTime, lpaPumpOnTime
+                lpaPumpOffTime, testLpaPumpOffTime = testLpaPumpOffTime, lpaPumpOffTime
+                lpaPumpStartDelay, testLpaPumpStartDelay = testLpaPumpStartDelay, lpaPumpStartDelay
+                
+                lpaPumpLock.release()
+                testModeOn = False
         
         if httpMethod == 'GET':
             response = html.format(solenoidOnTime, solenoidOffTime, solenoidStartDelay, aaPumpOnTime, aaPumpOffTime, aaPumpStartDelay, lpaPumpOnTime, lpaPumpOffTime, lpaPumpStartDelay, testModeOn, 'font-size:50px;')
@@ -202,6 +307,8 @@ while True:
     except OSError as e:
         client.close()
         print('connection closed')
+    except KeyboardInterrupt:
+        machine.reset()
 
 
 
