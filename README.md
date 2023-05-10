@@ -3,7 +3,7 @@ Automated control software for my hybrid soil/low pressure aeroponic/air atomize
 
 Introduction
 ------------
-I have built a three way hybrid grow system where the top few inches are soil, the bottom of that being wire mesh and burlap. Below this is an aeroponic root chamber. In this chamber I have 2 systems, a low pressure system and a high pressure system. The purpose for this design is to run a nutrient reservoir with a highly active microbial population. This requires both a low pressure system for spraying the biology across the roots without shredding them. The air atomized system is for the main nutrient and oxygen delivery to the root system. The idea behind this build is to blend Korean Natural Farming (KNF) techniques with modern hydroponics in both living soil and a living reservoir for maximum growth (aeroponics and nutrient delivery) while maintaining maximum crop quality (microbiological diversity).
+I have built a three way hybrid grow system where the top few inches are soil, the bottom of that being wire mesh and burlap. Below this is an aeroponic root chamber. In this chamber I have 2 systems, a low pressure system and a high pressure system. This requires both a low pressure system for spraying the biology across the roots without shredding them and an air atomized system  for the main nutrient and oxygen delivery to the root system. The idea behind this build is to blend Korean Natural Farming (KNF) techniques with modern hydroponics in both living soil and a living reservoir for maximum growth (aeroponics and nutrient delivery) while maintaining maximum crop quality (microbiological diversity).
 
 The soil portion is currently about 6 inches of soil over a wire mesh covered by burlap. This section is for supporting soil biology that does not form in hydroponics, such as mycelial networks for endomycorrhiza root colonization. Additional nutrients specific to a given plant can also be added here while continuing to share a common nutrient reservoir.
 
@@ -32,10 +32,10 @@ Key requirements
   - Garden2 (Done) Low pressure pump and nozzles working on a cycle timer
   - Garden3 (Done) Air atomizing sprayer turning on as expected
 	
-- GardenEpic2 (relies on GardenEpic1), Adjust timings on my phone to test/tune prototype
+- GardenEpic2 (Done) (relies on GardenEpic1), Adjust timings on my phone to test/tune prototype
   - Garden4 (Done) get the pico running as an access point that I can log into with my phone
-  - Garden5 (In Progress) get the pico accepting http requests and serving a bare bones web page (learn more HTML later) that gives a UI for changing timings
-  - add a test mode so debug sessions don't screw with production settings
+  - Garden5 (Done) get the pico accepting http requests and serving a bare bones web page (learn more HTML later) that gives a UI for changing timings
+  - Garden6 (Done) add a test mode so debug sessions don't screw with production settings
   - plants are already growing, pretty and maintainable are not priorities, speed is, will rewrite that afterwards
 
 - GardenEpic3 (relies on GardenEpic2), Tune the prototype's timings and pressures
@@ -56,7 +56,7 @@ Key requirements
     - make sure the pump stays on until the roots are all covered
     - when running in a pair as normal, only trigger every 3 hours. But if the AA sysem isn't working, run this at every 10 minutes
 
-- GardenEpic4 (relies on GardenEpic2), Refactor and clean up the interface
+- GardenEpic4 (In Progress) (relies on GardenEpic2), Refactor and clean up the interface
   - file persistence
   - load web page from file
   - make the interface not look like ass
