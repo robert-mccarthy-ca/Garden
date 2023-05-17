@@ -4,51 +4,44 @@ import socket
 import _thread
 import utime
 from cycleTimer import CycleTimer
-from picozero import pico_temp_sensor, pico_led
+from picozero import pico_led
 
+# for demonstration purposes, use your own credentials
 ssid = '<AccessPointTest>'
 wifiPass = 'dingleberries'
+
+# timer resolution in milliseconds
+# Lower for better resolution, raise for lower power consumption
+tickSizeMs = 100
 
 # onboard LED for testing timers with
 led = machine.Pin("LED",machine.Pin.OUT)
 
+# controls the solenoid for the air line leading to the nozzle
 solenoidPin = 16
-solenoidOnTime = 10
-solenoidOffTime = 590
-solenoidStartDelay = 0
-solenoidIncrement = 0.1
+solenoidOnTimeMs = 1000
+solenoidOffTimeMs = 59000
+solenoidStartDelayMs = 0
+solenoidIncrementMs = 100
 solenoidLock = _thread.allocate_lock()
-solenoidTimer = CycleTimer("Solenoid Timer", solenoidOnTime, solenoidOffTime, solenoidStartDelay, False, solenoidPin)
+solenoidTimer = CycleTimer("Solenoid Timer", solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs, False, tickSizeMs, solenoidPin)
 
-# aa = air atomizing
-aaPumpPin = 15
-aaPumpOnTime = 10
-aaPumpOffTime = 590
-aaPumpStartDelay = 0
-aaPumpIncrement = 0.1
-aaPumpLock = _thread.allocate_lock()
-aaPumpTimer = CycleTimer("Air Atomizing Water Pump Timer", aaPumpOnTime, aaPumpOffTime, aaPumpStartDelay, True, aaPumpPin)
+# circulation pump for the reservoir
+circulationPumpPin = 17
+circulationPumpOnTimeMs = 60000
+circulationPumpOffTimeMs = 1800000
+circulationPumpStartDelayMs = 0
+circulationPumpIncrementMs = 1000
+circulationPumpLock = _thread.allocate_lock()
+circulationPumpTimer = CycleTimer("Circulation Pump Timer", circulationPumpOnTimeMs, circulationPumpOffTimeMs, circulationPumpStartDelayMs, True, tickSizeMs, circulationPumpPin)
 
-# lpa = low pressure aeroponic
-lpaPumpPin = 17
-lpaPumpOnTime = 200
-lpaPumpOffTime = 5800
-lpaPumpStartDelay = 0
-lpaPumpIncrement = 1
-lpaPumpLock = _thread.allocate_lock()
-lpaPumpTimer = CycleTimer("Low Pressure Aeroponic Pump Timer", lpaPumpOnTime, lpaPumpOffTime, lpaPumpStartDelay, True, lpaPumpPin)
+testSolenoidOnTimeMs = 1000
+testSolenoidOffTimeMs = 3000
+testSolenoidStartDelayMs = 0
 
-testSolenoidOnTime = 10
-testSolenoidOffTime = 30
-testSolenoidStartDelay = 0
-
-testAaPumpOnTime = 10
-testAaPumpOffTime = 30
-testAaPumpStartDelay = 0
-
-testLpaPumpOnTime = 200
-testLpaPumpOffTime = 5800
-testLpaPumpStartDelay = 0
+testCirculationPumpOnTimeMs = 10000
+testCirculationPumpOffTimeMs = 10000
+testCirculationPumpStartDelayMs = 0
 
 testModeOn = False
 
@@ -59,46 +52,34 @@ def runTimers():
         solenoidTimer.tick()
         solenoidLock.release()
         
-        aaPumpLock.acquire()
-        aaPumpTimer.tick()
-        aaPumpLock.release()
-        
-        lpaPumpLock.acquire()
-        lpaPumpTimer.tick()
-        lpaPumpLock.release()
+        circulationPumpLock.acquire()
+        circulationPumpTimer.tick()
+        circulationPumpLock.release()
         
         index += 1
-        # sleep for a 100 milliseconds and go do it again
-        utime.sleep_ms(100)
+        # sleep for however long our tick size is
+        utime.sleep_ms(tickSizeMs)
         # periodic logging so we know this thread is still running
         if index % 50 == 0:
-            print(str(index / 10) + ' seconds')
+            print(str(index * tickSizeMs / 1000) + ' seconds')
 
 def swapAndReset():
     solenoidLock.acquire()
     
-    solenoidOnTime, testSolenoidOnTime = testSolenoidOnTime, solenoidOnTime
-    solenoidOffTime, testSolenoidOffTime = testSolenoidOffTime, solenoidOffTime
-    solenoidStartDelay, testSolenoidStartDelay = testSolenoidStartDelay, solenoidStartDelay
-    solenoidTimer.reinitialize(solenoidOnTime, solenoidOffTime, solenoidStartDelay)
+    solenoidOnTimeMs, testSolenoidOnTime = testSolenoidOnTime, solenoidOnTimeMs
+    solenoidOffTimeMs, testSolenoidOffTime = testSolenoidOffTime, solenoidOffTimeMs
+    solenoidStartDelayMs, testSolenoidStartDelay = testSolenoidStartDelay, solenoidStartDelayMs
+    solenoidTimer.reinitialize(solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs)
     
     solenoidLock.release()
     
-    aaPumpLock.acquire()
+    circulationPumpLock.acquire()
     
-    aaPumpOnTime, testAaPumpOnTime = testAaPumpOnTime, aaPumpOnTime
-    aaPumpOffTime, testAaPumpOffTime = testAaPumpOffTime, aaPumpOffTime
-    aaPumpStartDelay, testAaPumpStartDelay = testAaPumpStartDelay, aaPumpStartDelay
+    circulationPumpOnTimeMs, testCirculationPumpOnTime = testCirculationPumpOnTime, circulationPumpOnTimeMs
+    circulationPumpOffTimeMs, testCirculationPumpOffTime = testCirculationPumpOffTime, circulationPumpOffTimeMs
+    circulationPumpStartDelayMs, testCirculationPumpStartDelay = testCirculationPumpStartDelay, circulationPumpStartDelayMs
     
-    aaPumpLock.release()
-    
-    lpaPumpLock.acquire()
-    
-    lpaPumpOnTime, testLpaPumpOnTime = testLpaPumpOnTime, lpaPumpOnTime
-    lpaPumpOffTime, testLpaPumpOffTime = testLpaPumpOffTime, lpaPumpOffTime
-    lpaPumpStartDelay, testLpaPumpStartDelay = testLpaPumpStartDelay, lpaPumpStartDelay
-    
-    lpaPumpLock.release()
+    circulationPumpLock.release()
 
 accessPoint = network.WLAN(network.AP_IF)
 accessPoint.config(essid=ssid, password=wifiPass)
@@ -152,153 +133,75 @@ while True:
             changed = True
             
             if action == '/solenoidOnTimeUp?':
-                solenoidOnTime += solenoidIncrement
+                solenoidOnTimeMs += solenoidIncrement
                 print('solenoidOnTimeUp')
             elif action == '/solenoidOffTimeUp?':
-                solenoidOffTime += solenoidIncrement
+                solenoidOffTimeMs += solenoidIncrement
                 print('solenoidOffTimeUp')
             elif action == '/solenoidStartDelayUp?':
-                solenoidStartDelay += solenoidIncrement
+                solenoidStartDelayMs += solenoidIncrement
                 print('solenoidStartDelayUp')
             elif action == '/solenoidOnTimeDown?' and solenoidOnTime >= solenoidIncrement:
-                solenoidOnTime -= solenoidIncrement
+                solenoidOnTimeMs -= solenoidIncrement
                 print('solenoidOnTimeDown')
             elif action == '/solenoidOffTimeDown?' and solenoidOffTime >= solenoidIncrement:
-                solenoidOffTime -= solenoidIncrement
+                solenoidOffTimeMs -= solenoidIncrement
                 print('solenoidOffTimeDown')
             elif action == '/solenoidStartDelayDown?' and solenoidStartDelay >= solenoidIncrement:
-                solenoidStartDelay -= solenoidIncrement
+                solenoidStartDelayMs -= solenoidIncrement
                 print('solenoidStartDelayDown')
             else:
                 changed = False
                 print('unknown action for solenoid, skipping')               
             
             if changed:
-                solenoidTimer.reinitialize(solenoidOnTime, solenoidOffTime, solenoidStartDelay)
+                solenoidTimer.reinitialize(solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs)
                 print('reinitializing solenoid timer')
                 
             solenoidLock.release()
-        elif action.startswith('/aaPump'):
-            aaPumpLock.acquire()
+        elif action.startswith('/circulationPump'):
+            circulationPumpLock.acquire()
             
             changed = True
             
-            if action == '/aaPumpOnTimeUp?':
-                aaPumpOnTime += aaPumpIncrement
-                print('aaPumpOnTimeUp')
-            elif action == '/aaPumpOffTimeUp?':
-                aaPumpOffTime += aaPumpIncrement
-                print('aaPumpOffTimeUp')
-            elif action == '/aaPumpStartDelayUp?':
-                aaPumpStartDelay += aaPumpIncrement
-                print('aaPumpStartDelayUp')
-            elif action == '/aaPumpOnTimeDown?' and aaPumpOnTime >= aaPumpIncrement:
-                aaPumpOnTime -= aaPumpIncrement
-                print('aaPumpOnTimeDown')
-            elif action == '/aaPumpOffTimeDown?' and aaPumpOffTime >= aaPumpIncrement:
-                aaPumpOffTime -= aaPumpIncrement
-                print('aaPumpOffTimeDown')
-            elif action == '/aaPumpStartDelayDown?' and aaPumpStartDelay >= aaPumpIncrement:
-                aaPumpStartDelay -= aaPumpIncrement
-                print('aaPumpStartDelayDown')
+            if action == '/circulationPumpOnTimeUp?':
+                circulationPumpOnTimeMs += circulationPumpIncrement
+                print('circulationPumpOnTimeUp')
+            elif action == '/circulationPumpOffTimeUp?':
+                circulationPumpOffTimeMs += circulationPumpIncrement
+                print('circulationPumpOffTimeUp')
+            elif action == '/circulationPumpStartDelayUp?':
+                circulationPumpStartDelayMs += circulationPumpIncrement
+                print('circulationPumpStartDelayUp')
+            elif action == '/circulationPumpOnTimeDown?' and circulationPumpOnTime >= circulationPumpIncrement:
+                circulationPumpOnTimeMs -= circulationPumpIncrement
+                print('circulationPumpOnTimeDown')
+            elif action == '/circulationPumpOffTimeDown?' and circulationPumpOffTime >= circulationPumpIncrement:
+                circulationPumpOffTimeMs -= circulationPumpIncrement
+                print('circulationPumpOffTimeDown')
+            elif action == '/circulationPumpStartDelayDown?' and circulationPumpStartDelay >= circulationPumpIncrement:
+                circulationPumpStartDelayMs -= circulationPumpIncrement
+                print('circulationPumpStartDelayDown')
             else:
                 changed = False
-                print('unknown action for aaPump, skipping')              
+                print('unknown action for circulationPump, skipping')              
             
             if changed:
-                aaPumpTimer.reinitialize(aaPumpOnTime, aaPumpOffTime, aaPumpStartDelay)
-                print('reinitializing AA timer')
+                circulationPumpTimer.reinitialize(circulationPumpOnTimeMs, circulationPumpOffTimeMs, circulationPumpStartDelayMs)
+                print('reinitializing circulation pump timer')
                 
-            aaPump.release()
-        elif action.startswith('/lpaPump'):
-            lpaPumpLock.acquire()
-            
-            changed = True
-            
-            if action == '/lpaPumpOnTimeUp?':
-                lpaPumpOnTime += lpaPumpIncrement
-                print('lpaPumpOnTimeUp')
-            elif action == '/lpaPumpOffTimeUp?':
-                lpaPumpOffTime += lpaPumpIncrement
-                print('lpaPumpOffTimeUp')
-            elif action == '/lpaPumpStartDelayUp?':
-                lpaPumpStartDelay += lpaPumpIncrement
-                print('lpaPumpStartDelayUp')
-            elif action == '/lpaPumpOnTimeDown?' and lpaPumpOnTime >= lpaPumpIncrement:
-                lpaPumpOnTime -= lpaPumpIncrement
-                print('lpaPumpOnTimeDown')
-            elif action == '/lpaPumpOffTimeDown?' and lpaPumpOffTime >= lpaPumpIncrement:
-                lpaPumpOffTime -= lpaPumpIncrement
-                print('lpaPumpOffTimeDown')
-            elif action == '/lpaPumpStartDelayDown?' and lpaPumpStartDelay >= lpaPumpIncrement:
-                lpaPumpStartDelay -= lpaPumpIncrement
-                print('lpaPumpStartDelayDown')
-            else:
-                changed = False
-                print('unknown action for lpaPump, skipping')
-            
-            if changed == True:
-                lpaPumpTimer.reinitialize(lpaPumpOnTime, lpaPumpOffTime, lpaPumpStartDelay)
-                print('reinitializing LPA timer')
-                
-            lpaPumpLock.release()
+            circulationPump.release()
         elif action == '/testModeOn?':
             if testModeOn == False:
-                solenoidLock.acquire()
-    
-                solenoidOnTime, testSolenoidOnTime = testSolenoidOnTime, solenoidOnTime
-                solenoidOffTime, testSolenoidOffTime = testSolenoidOffTime, solenoidOffTime
-                solenoidStartDelay, testSolenoidStartDelay = testSolenoidStartDelay, solenoidStartDelay
-                solenoidTimer.reinitialize(solenoidOnTime, solenoidOffTime, solenoidStartDelay)
-                
-                solenoidLock.release()
-                
-                aaPumpLock.acquire()
-                
-                aaPumpOnTime, testAaPumpOnTime = testAaPumpOnTime, aaPumpOnTime
-                aaPumpOffTime, testAaPumpOffTime = testAaPumpOffTime, aaPumpOffTime
-                aaPumpStartDelay, testAaPumpStartDelay = testAaPumpStartDelay, aaPumpStartDelay
-                
-                aaPumpLock.release()
-                
-                lpaPumpLock.acquire()
-                
-                lpaPumpOnTime, testLpaPumpOnTime = testLpaPumpOnTime, lpaPumpOnTime
-                lpaPumpOffTime, testLpaPumpOffTime = testLpaPumpOffTime, lpaPumpOffTime
-                lpaPumpStartDelay, testLpaPumpStartDelay = testLpaPumpStartDelay, lpaPumpStartDelay
-                
-                lpaPumpLock.release()
+                swapAndReset()
                 testModeOn = True
         elif action == '/testModeOff?':
             if testModeOn == True:
-                solenoidLock.acquire()
-    
-                solenoidOnTime, testSolenoidOnTime = testSolenoidOnTime, solenoidOnTime
-                solenoidOffTime, testSolenoidOffTime = testSolenoidOffTime, solenoidOffTime
-                solenoidStartDelay, testSolenoidStartDelay = testSolenoidStartDelay, solenoidStartDelay
-                solenoidTimer.reinitialize(solenoidOnTime, solenoidOffTime, solenoidStartDelay)
-                
-                solenoidLock.release()
-                
-                aaPumpLock.acquire()
-                
-                aaPumpOnTime, testAaPumpOnTime = testAaPumpOnTime, aaPumpOnTime
-                aaPumpOffTime, testAaPumpOffTime = testAaPumpOffTime, aaPumpOffTime
-                aaPumpStartDelay, testAaPumpStartDelay = testAaPumpStartDelay, aaPumpStartDelay
-                
-                aaPumpLock.release()
-                
-                lpaPumpLock.acquire()
-                
-                lpaPumpOnTime, testLpaPumpOnTime = testLpaPumpOnTime, lpaPumpOnTime
-                lpaPumpOffTime, testLpaPumpOffTime = testLpaPumpOffTime, lpaPumpOffTime
-                lpaPumpStartDelay, testLpaPumpStartDelay = testLpaPumpStartDelay, lpaPumpStartDelay
-                
-                lpaPumpLock.release()
+                swapAndReset()
                 testModeOn = False
         
         if httpMethod == 'GET':
-            response = html.format(solenoidOnTime, solenoidOffTime, solenoidStartDelay, aaPumpOnTime, aaPumpOffTime, aaPumpStartDelay, lpaPumpOnTime, lpaPumpOffTime, lpaPumpStartDelay, testModeOn, 'font-size:50px;')
+            response = html.format('font-size:50px;', solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs, circulationPumpOnTime, circulationPumpOffTime, circulationPumpStartDelay, testModeOn)
             client.send(response)
             print('returning html response to ', clientAddress)
 
