@@ -4,22 +4,25 @@ import _thread
 
 # used to set a pin to on/off on a cycle, for example, 2 seconds on, 7 seconds off forever
 # name = name used in log statements
-# onTime = how many ticks the timer is on for
-# offTime = how many ticks the timer is off for
-# startOn = whether or not the pin should initially be set to the high state
-# startDelay = offset so this can be set to overlap with another timer
+# onTimeMs = how many milleseconds the timer is on for
+# offTimeMs = how many milliseconds the timer is off for
+# startOnMs = whether or not the pin should initially be set to the high state
+# startDelayMs = offset so this can be set to overlap with another timer in milliseconds
+# tickSizeMs = how much timer passes between ticks in milliseconds
+# pinNumber = the Pico W pin number to use for transmitting our signal
 # thread safe
 class CycleTimer:
-    def __init__(self, name, onTime, offTime, startDelay, startOn, pinNumber):
+    def __init__(self, name, onTimeMs, offTimeMs, startDelayMs, startOn, tickSizeMs, pinNumber):
         self.name = name
         self.onTime = onTime 
         self.offTime = offTime
         self.startDelay = startDelay
+        self.tickSize = tickSizeMs
         self.index = 0
-        self.totalDuration = onTime + offTime
         self.onIndex = startDelay
-        self.offIndex = (startDelay + onTime) % self.totalDuration
+        self.offIndex = startDelay + onTime
         self.on = False
+        self.paused = False
         newPin = Pin(pinNumber, Pin.OUT, Pin.PULL_DOWN)
         self.lock = _thread.allocate_lock()
         
@@ -36,36 +39,74 @@ class CycleTimer:
     # returns whether the timer is currently in the on state
     def tick(self):
         self.lock.acquire()
-        # print('tick(): index = ', self.index, ' onIndex = ', self.onIndex, ', offIndex = ', self.offIndex)
         
-        if self.index == self.onIndex and self.on == False and self.onTime > 0:
-            print(self.name + " turning on at index " + str(self.index))
+        # do nothing if paused
+        if self.paused:
+            pass
+        # delay before next shutoff set at the start of the on period, changes to that value take effect then
+        elif self.on == False and self.index >= self.onIndex:
             self.pin.toggle()
             self.on = True
-        elif self.index == self.offIndex and self.on == True and self.offTime > 0:
-            print(self.name + " turning off at index " + str(self.index))
+            self.offIndex = self.index + self.offTime
+            self.index += tickSize
+            print(self.name + " turning on at index " + str(self.index))
+        elif self.on == True and self.index >= self.offIndex:
             self.pin.toggle()
             self.on = False
+            self.onIndex = self.index + self.onTime
+            self.index += tickSize
+            print(self.name + " turning off at index " + str(self.index))
         
-        self.index += 1
-        # faster than using modulus operations every time
-        if self.index == self.totalDuration:
-            self.index = 0
         self.lock.release()
             
         return self.on
+    
+    def setOnTimeMs(self, newTime):
+        self.lock.acquire()
+        self.onTime = newTime
+        self.lock.release()
         
-    # resets with new values for onTime, offTime and startDelay
-    def reinitialize(self, onTime, offTime, startDelay):
+    def setOffTimeMs(self, newTime):
+        self.lock.acquire()
+        self.offTime = newTime
+        self.lock.release()
+        
+    def setStartDelay(self, newTime):
+        self.lock.acquire()
+        self.startDelay = newTime
+        self.lock.release()
+        
+    def setTickSize(self, newTime):
+        self.lock.acquire()
+        self.tickSize = newTime
+        self.lock.release()
+        
+    def pause(self):
+        self.lock.acquire()
+        self.paused = True
+        self.lock.release()
+        
+    def resume(self):
+        self.lock.acquire()
+        self.paused = False
+        self.lock.release()
+        
+    def reset(self):
         self.lock.acquire()
         if self.on:
             self.pin.toggle()
             self.on = False
         self.index = 0
+        self.onIndex = self.startDelay
+        self.offIndex = self.onIndex + self.offTime
+        self.lock.release()
+        
+    # resets with new values for onTime, offTime and startDelay
+    def reinitialize(self, onTime, offTime, startDelay):
+        self.lock.acquire()
         self.onTime = onTime
         self.offTime = offTime
-        self.totalDuration = onTime + offTime
         self.startDelay = startDelay
-        self.onIndex = startDelay
-        self.offIndex = (startDelay + onTime) % self.totalDuration
         self.lock.release()
+        
+        self.reset()
