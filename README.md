@@ -1,17 +1,19 @@
 # CyberGarden
-Automated control software for my hybrid soil/low pressure aeroponic/air atomized aeroponic garden.
+Automated control software for my hybrid soil/aeroponic garden.
 
 Introduction
 ------------
-I have built a three way hybrid grow system where the top few inches are soil, the bottom of that being wire mesh and burlap. Below this is an aeroponic root chamber. In this chamber I have 2 systems, a low pressure system and a high pressure system. The purpose for this design is to run a nutrient reservoir with a highly active microbial population. This requires both a low pressure system for spraying the biology across the roots without shredding them. The air atomized system is for the main nutrient and oxygen delivery to the root system. The idea behind this build is to blend Korean Natural Farming (KNF) techniques with modern hydroponics in both living soil and a living reservoir for maximum growth (aeroponics and nutrient delivery) while maintaining maximum crop quality (microbiological diversity).
+I started with building a three way hybrid grow system where the top few inches are soil, the bottom of that being wire mesh and burlap. Below this is an aeroponic root chamber. In this chamber I have 2 systems, a low pressure system and a high pressure system. This requires both a low pressure system for spraying the biology across the roots without shredding them and an air atomized system  for the main nutrient and oxygen delivery to the root system. The idea behind this build is to blend Korean Natural Farming (KNF) techniques with modern hydroponics in both living soil and a living reservoir for maximum growth (aeroponics and nutrient delivery) while maintaining maximum crop quality (microbiological diversity).
+
+This approach required a water pump for the low pressure aeroponic portion, another water pump for reservoir circulation, and an air atomizing nozzle, which in turn requried a water pump and an air compressor. I found a better nozzle however, a waste oil burner nozzle, which siphons the fluid out and has a 2 mm orifice. This removes the need for the water pump for the air atomizing nozzle, and removes the need for the low pressure system altogether, saving 2 pumps.
 
 The soil portion is currently about 6 inches of soil over a wire mesh covered by burlap. This section is for supporting soil biology that does not form in hydroponics, such as mycelial networks for endomycorrhiza root colonization. Additional nutrients specific to a given plant can also be added here while continuing to share a common nutrient reservoir.
 
-The low pressure system is simply a small submersible pump placed in the nutrient reservoir connected to a hose running to a manifold with cheap plastic screw in sprayer nozzles. The purpose of this system is to spray the microbiology in the reservoir all over the roots. This is intended to be a periodic soaking spray with as full coverage as possible. This is not as effective at nutrient transfer as a high pressure system, but carries more biology, being a dousing, not just a misting. This system is to maintain microbial populations and diversity.
+The low pressure system was simply a small submersible pump placed in the nutrient reservoir connected to a hose running to a manifold with cheap plastic screw in sprayer nozzles. The purpose of this system was to spray the microbiology in the reservoir all over the roots. This was intended to be a periodic soaking spray with as full coverage as possible. This was not as effective at nutrient transfer as a high pressure system, but carries more biology, being a dousing, not just a misting. This system was to maintain microbial populations and diversity. No longer used due to a better air atomizing nozzle making it obsolete.
 
-The high pressure system is where the bulk of the nutrients and oxygen will be delivered from. This is built using a nozzle that takes a pressurized nutrient feed and a 1/4" air line from an air compressor to create a finely atomized spray of nutrients while also carrying fresh oxygen to the root zone. This system is designed to be the primary method of nutrient and oxygen delivery to the roots.
+The high pressure system is where the bulk of the nutrients and oxygen will be delivered from. This is built using a nozzle that takes an unpressurized nutrient feed and an air line from an air compressor to create a finely atomized spray of nutrients while also carrying fresh oxygen to the root zone. This system is designed to be the primary method of nutrient and oxygen delivery to the roots.
 
-This requires more precision over the timing than was readily available for a reasonable price. So I started building one with a Raspberry Pi Pico W (about $15 delivered to your door). I wanted to use a Raspberry Pi, but there appears to be a world wide shortage of those, thus the Pico W which, with 2 cores and a wifi chip should have the processing I need to run as a web server that I can log into and still control all my devices in my garden. This will start with just getting it working, then getting it working on my phone, then making it pretty, redesigning the build, and then eventually making it an android app and rewrite it in C.
+This requires more precision over the timing than was readily available for a reasonable price. So I started building one with a Raspberry Pi Pico W (about $15 delivered to your door). I wanted to use a Raspberry Pi, but there appears to be a world wide shortage of those, thus the Pico W, which with 2 cores and a wifi chip should have the processing I need to run as a web server that I can log into and still control all my devices in my garden. This will start with just getting it working, then getting it working on my phone, then making it pretty, redesigning the build, and then eventually making it an android app and rewrite it in C.
 
 Progress:
 --------
@@ -32,13 +34,14 @@ Key requirements
   - Garden2 (Done) Low pressure pump and nozzles working on a cycle timer
   - Garden3 (Done) Air atomizing sprayer turning on as expected
 	
-- GardenEpic2 (relies on GardenEpic1), Adjust timings on my phone to test/tune prototype
+- GardenEpic2 (Done) (relies on GardenEpic1), Adjust timings on my phone to test/tune prototype
   - Garden4 (Done) get the pico running as an access point that I can log into with my phone
-  - Garden5 (In Progress) get the pico accepting http requests and serving a bare bones web page (learn more HTML later) that gives a UI for changing timings
-  - add a test mode so debug sessions don't screw with production settings
+  - Garden5 (Done) get the pico accepting http requests and serving a bare bones web page (learn more HTML later) that gives a UI for changing timings
+  - Garden6 (Done) add a test mode so debug sessions don't screw with production settings
   - plants are already growing, pretty and maintainable are not priorities, speed is, will rewrite that afterwards
 
 - GardenEpic3 (relies on GardenEpic2), Tune the prototype's timings and pressures
+  - Garden7 (Done) replace the air atomizing nozzle with one that does not require a water pump
   - Air Atomizing Aeroponic nozzle
     - get droplet size right
       - get water pressure right
@@ -49,16 +52,10 @@ Key requirements
       - don't let the roots dry out
       - don't have the roots dripping either
     - make sure the nozzle is pointed in a way that fills the root chamber without harming the roots
-  - Low Pressure Aeroponic nozzles
-    - make sure the pressure is high enough to reach all nozzles
-    - make sure the pressure is low enough to not harm the roots
-    - make sure there's good root coverage with enough nozzles pointed in the right directions
-    - make sure the pump stays on until the roots are all covered
-    - when running in a pair as normal, only trigger every 3 hours. But if the AA sysem isn't working, run this at every 10 minutes
 
-- GardenEpic4 (relies on GardenEpic2), Refactor and clean up the interface
+- GardenEpic4 (In Progress) (relies on GardenEpic2), Refactor and clean up the interface
   - file persistence
-  - load web page from file
+  - load configuration from file
   - make the interface not look like ass
     - proper buttons, arrows, text entry areas
     - reset buttons
