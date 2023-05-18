@@ -3,7 +3,7 @@ Automated control software for my hybrid soil/aeroponic garden.
 
 Introduction
 ------------
-I started with building a three way hybrid grow system where the top few inches are soil, the bottom of that being wire mesh and burlap. Below this is an aeroponic root chamber. In this chamber I have 2 systems, a low pressure system and a high pressure system. This requires both a low pressure system for spraying the biology across the roots without shredding them and an air atomized system  for the main nutrient and oxygen delivery to the root system. The idea behind this build is to blend Korean Natural Farming (KNF) techniques with modern hydroponics in both living soil and a living reservoir for maximum growth (aeroponics and nutrient delivery) while maintaining maximum crop quality (microbiological diversity).
+I started with building a three way hybrid grow system where the top few inches are soil, the bottom of that being wire mesh and burlap. Below this is an aeroponic root chamber. In this chamber I have 2 systems, a low pressure aeroponic (LPA) system and an air atomized aeroponic (AAA) system. This requires both a low pressure system for spraying the biology across the roots without shredding them and an air atomized system  for the main nutrient and oxygen delivery to the root system. The idea behind this build is to blend Korean Natural Farming (KNF) techniques with modern hydroponics in both living soil and a living reservoir for maximum growth (aeroponics and nutrient delivery) while maintaining maximum crop quality (microbiological diversity).
 
 This approach required a water pump for the low pressure aeroponic portion, another water pump for reservoir circulation, and an air atomizing nozzle, which in turn requried a water pump and an air compressor. I found a better nozzle however, a waste oil burner nozzle, which siphons the fluid out and has a 2 mm orifice. This removes the need for the water pump for the air atomizing nozzle, and removes the need for the low pressure system altogether, saving 2 pumps.
 
@@ -20,12 +20,28 @@ Progress:
 GardenEpic1 (Done):
 ------------------
 - The current prototype is bare bones, but running
+- Three timers are being used, one each for the solenoid to the air atomizing nozzle, the air atomizing nozzle water pump, and the low pressure aeroponic water pump
 - Making modifications requires removing the pico W, reprogramming the Pico W, and reinstalling it in the garden, which is ridiculous, see GardenEpic2
 - But it's running and plants can survive in it.
 
-GardenEpic2 (In Progress):
+GardenEpic2 (Done):
+------------------
+- Pico W is now operating as an access point, log in to access the web interface at http://192.168.4.1
+- Can now switch to Test Mode which uses different (much shorter) timings
+- Adjusting the timings has a bug, needs to be fixed
+- Interface looks like ass, need to go learn some basic html forms/input to make that more usable, and probably some CSS to make it look prettier. But it works enough that I can test the sprayer pressures
+
+GardenEpic3 (In Progress):
 -------------------------
-- Pico is now operating as an access point
+- Replaced the air atomizing (AA) nozzle with a waste oil burner nozzle which siphons fluid without the need for a water pump
+  - removes the need for the LPA system and the water pump to the AA nozzle
+- currently not doing a very good job of things, need to tinker more with timings and pressures
+  - now getting a spray, just not enough to keep roots happy, need to fix the timer adjustment bug (Garden9)
+
+GardenEpic4 (In Progress):
+-------------------------
+- Removed old timers for LPA and AA water pumps
+- Added timer for circulation pump
 
 Key requirements
 ----------------
@@ -41,20 +57,24 @@ Key requirements
   - plants are already growing, pretty and maintainable are not priorities, speed is, will rewrite that afterwards
 
 - GardenEpic3 (relies on GardenEpic2), Tune the prototype's timings and pressures
-  - Garden7 (Done) replace the air atomizing nozzle with one that does not require a water pump
+  - Garden7 (Done) replaced the air atomizing nozzle with one that does not require a water pump (waste oil burner nozzle)
   - Air Atomizing Aeroponic nozzle
-    - get droplet size right
+    - get droplet size right, looking for a fine fog
       - get water pressure right
       - get air pressure right
     - get spray duration right
-      - make sure it fills the root chamber without billowing out the drain
+      - make sure it fully fills the root chamber without billowing out the drain
     - get frequency right
       - don't let the roots dry out
       - don't have the roots dripping either
     - make sure the nozzle is pointed in a way that fills the root chamber without harming the roots
 
-- GardenEpic4 (In Progress) (relies on GardenEpic2), Refactor and clean up the interface
+- GardenEpic4 (In Progress) (relies on GardenEpic2), Clean up the interface and general refactoring/improving
   - Garden8 (InProgress) Have the onboard LED assignable to a timer for testing
+  - Garden9 (InProgress) Fix timing bug that blows up when you adjust the timings upwards to the solenoid in test mode
+    - CycleTimer now in milliseconds and simply increments to the next index since Python has no rollover limitations like the ESP32 had
+    - Can now set individual settings without resetting the timer, allowing for adjusting timings by small increments without a bajillion resets
+  - Garden10 (In Progress) update interface with new timer configuration for solenoid and circulation pump, removing old LPA water pump and AA water pump timers
   - file persistence
   - load configuration from file
   - make the interface not look like ass
@@ -69,7 +89,7 @@ Key requirements
   - final refactoring of all code
 	
 - GardenEpic5 (relies on GardenEpic3 and GardenEpic4), Replace the prototype with a new version
-  - record rebuild for YouTube possibly, see how ambitious I get by this point. Probably depend on growing results
+  - record rebuild for YouTube possibly, see how ambitious I get by this point. Probably depend on growing results, not worthwhile if I can only show what not to do
   - figure out new correct dimensions (height)
   - new chamber for roots that doesn't/can't leak
   - proper drain system/sump
