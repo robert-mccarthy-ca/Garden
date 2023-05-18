@@ -3,97 +3,113 @@ import utime
 import _thread
 
 # used to set a pin to on/off on a cycle, for example, 2 seconds on, 7 seconds off forever
+# does not use interrupts, stays on the thread that calls it
+# thread safe
+#
 # name = name used in log statements
 # onTimeMs = how many milleseconds the timer is on for
 # offTimeMs = how many milliseconds the timer is off for
-# startOnMs = whether or not the pin should initially be set to the high state
+# startPinHigh = whether or not the pin should initially be set to the high state
 # startDelayMs = offset so this can be set to overlap with another timer in milliseconds
 # tickSizeMs = how much timer passes between ticks in milliseconds
 # pinNumber = the Pico W pin number to use for transmitting our signal
-# thread safe
+
 class CycleTimer:
-    def __init__(self, name, onTimeMs, offTimeMs, startDelayMs, startOn, tickSizeMs, pinNumber):
-        self.name = name
-        self.onTime = onTime 
-        self.offTime = offTime
-        self.startDelay = startDelay
+    def __init__(self, name, onTimeMs, offTimeMs, startDelayMs, startPinHigh, tickSizeMs, pinNumber):
+        self.prefix = name + ' - '
+        self.onDuration = onTimeMs
+        self.offDuration = offTimeMs 
+        self.nextOnTime = startDelayMs 
+        self.nextOffTime = startDelayMs + onTimeMs
+        self.startDelay = startDelayMs
         self.tickSize = tickSizeMs
-        self.index = 0
-        self.onIndex = startDelay
-        self.offIndex = startDelay + onTime
+        self.currentTime = 0
         self.on = False
         self.paused = False
-        self.led = Pin("LED",machine.Pin.OUT)
+        self.led = Pin("LED", Pin.OUT)
         self.useLED = False
-        newPin = Pin(pinNumber, Pin.OUT, Pin.PULL_DOWN)
+        self.pin = Pin(pinNumber, Pin.OUT, Pin.PULL_DOWN)
         self.lock = _thread.allocate_lock()
         
-        if startOn == True:
-            newPin.on()
+        if startPinHigh == True:
+            self.pin.on()
         else:
-            newPin.off()
-        self.pin = newPin
+            self.pin.off()
             
-        print("CycleTimer - " + str(name) + " created on GPIO pin " + str(pinNumber))
-        print("  " + str(onTime) + " seconds on, " + str(offTime) + " seconds off, with start delay of " + str(startDelay) + " seconds")
+        print("CycleTimer - " + str(name) + " created on Pico W pin # " + str(pinNumber))
+        print("  " + str(onTimeMs/1000) + " seconds on, " + str(offTimeMs/1000) + " seconds off, with start delay of " + str(startDelayMs/1000) +
+              " seconds at a resolution of " + str(tickSizeMs) + " milliseconds")
         
     # passage of 1 tick
     # returns whether the timer is currently in the on state
     def tick(self):
-        self.lock.acquire()
-        
         # do nothing if paused
         if self.paused:
-            pass
+            return
+        
+        self.lock.acquire()
+        #print('on = ' + str(self.on) + ', currentTime = ' + str(self.currentTime) + ', nextOnTime = ' + str(self.nextOnTime) + ', nextOffTime = ' + str(self.nextOffTime))
         # delay before next shutoff set at the start of the on period, changes to that value take effect then
-        elif self.on == False and self.index >= self.onIndex:
+        if self.on == False and self.currentTime >= self.nextOnTime:
             self.pin.toggle()
             self.on = True
-            self.offIndex = self.index + self.offTime
-            self.index += tickSize
-            print(self.name + " turning on at index " + str(self.index))
+            self.nextOffTime = self.currentTime + self.onDuration
+            print(self.prefix + "turning on at time " + str(self.currentTime))
             if self.useLED == True:
                 self.led.on()
-        elif self.on == True and self.index >= self.offIndex:
+                print(self.prefix + 'LED on')
+        elif self.on == True and self.currentTime >= self.nextOffTime:
             self.pin.toggle()
             self.on = False
-            self.onIndex = self.index + self.onTime
-            self.index += tickSize
-            print(self.name + " turning off at index " + str(self.index))
-            self.led.off()
+            self.nextOnTime = self.currentTime + self.offDuration
+            print(self.prefix + "turning off at time " + str(self.currentTime))
+            if self.useLED == True:
+                self.led.off()
+                print(self.prefix + 'LED off')
+
+        self.currentTime += self.tickSize
+        #print(self.prefix + str(self.currentTime/1000) + ' seconds')
         
         self.lock.release()
             
         return self.on
     
-    def setOnTimeMs(self, newTime):
+    def setOnDuration(self, newTime):
         self.lock.acquire()
-        self.onTime = newTime
+        self.onDuration = newTime
+        print(self.prefix + 'onDuration set to ' + str(newTime/1000) + ' seconds')
         self.lock.release()
         
-    def setOffTimeMs(self, newTime):
+    def setOffDuration(self, newTime):
         self.lock.acquire()
-        self.offTime = newTime
+        self.offDuration = newTime
+        print(self.prefix + 'offDuration set to ' + str(newTime/1000) + ' seconds')
         self.lock.release()
         
     def setStartDelay(self, newTime):
         self.lock.acquire()
         self.startDelay = newTime
+        print(self.prefix + 'startDelay set to ' + str(newTime/1000) + ' seconds')
         self.lock.release()
         
     def setTickSize(self, newTime):
         self.lock.acquire()
         self.tickSize = newTime
+        print(self.prefix + 'tick size set to ' + str(newTime/1000) + ' seconds')
         self.lock.release()
         
     def pause(self):
         self.lock.acquire()
-        self.paused = True
+        if self.paused == False:
+            self.paused = True
+            print(self.prefix + 'pausing')
         self.lock.release()
         
     def resume(self):
         self.lock.acquire()
-        self.paused = False
+        if self.paused == True:
+            self.paused = False
+            print(self.prefix + 'resuming')
         self.lock.release()
         
     def reset(self):
@@ -101,16 +117,16 @@ class CycleTimer:
         if self.on:
             self.pin.toggle()
             self.on = False
-        self.index = 0
-        self.onIndex = self.startDelay
-        self.offIndex = self.onIndex + self.offTime
+        self.currentTime = 0
+        self.nextOnTime = self.startDelay
+        self.nextOffTime = self.startDelay + self.offDuration
         self.lock.release()
         
-    # resets with new values for onTime, offTime and startDelay
-    def reinitialize(self, onTime, offTime, startDelay):
+    # resets with new values for onDuration, offDuration and startDelay
+    def reinitialize(self, onDuration, offDuration, startDelay):
         self.lock.acquire()
-        self.onTime = onTime
-        self.offTime = offTime
+        self.onDuration = onDuration
+        self.offDuration = offDuration
         self.startDelay = startDelay
         self.lock.release()
         
@@ -119,6 +135,7 @@ class CycleTimer:
     def setUseLED(self, value):
         self.lock.acquire()
         self.useLED = value
+        print(self.prefix + 'UseLED set to ' + str(self.useLED))
         self.lock.release()
         
     def isUsingLED(self):
