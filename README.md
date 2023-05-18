@@ -54,6 +54,7 @@ Key requirements
     - make sure the nozzle is pointed in a way that fills the root chamber without harming the roots
 
 - GardenEpic4 (In Progress) (relies on GardenEpic2), Refactor and clean up the interface
+  - Garden8 (InProgress) Have the onboard LED assignable to a timer for testing
   - file persistence
   - load configuration from file
   - make the interface not look like ass
