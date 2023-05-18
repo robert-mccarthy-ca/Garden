@@ -3,7 +3,7 @@ import utime
 import _thread
 
 # used to set a pin to on/off on a cycle, for example, 2 seconds on, 7 seconds off forever
-# does not use interrupts, stays on the thread that calls it
+# does not use interrupts or timers, stays on the thread that calls it, relies on a controller to tell it when a tick has elapsed
 # thread safe
 #
 # name = name used in log statements
