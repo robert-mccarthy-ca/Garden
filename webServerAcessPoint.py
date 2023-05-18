@@ -150,6 +150,14 @@ while True:
             elif action == '/solenoidStartDelayDown?' and solenoidStartDelay >= solenoidIncrement:
                 solenoidStartDelayMs -= solenoidIncrement
                 print('solenoidStartDelayDown')
+            elif action == '/solenoidSetUseLED?':
+                solenoidTimer.setUseLED(True)
+                
+                circulationPumpLock.acquire()
+                circulationPumpTimer.setUseLED(False)
+                circulationPumpLock.release()
+                
+                print('solenoidSetUseLed')
             else:
                 changed = False
                 print('unknown action for solenoid, skipping')               
@@ -182,6 +190,14 @@ while True:
             elif action == '/circulationPumpStartDelayDown?' and circulationPumpStartDelay >= circulationPumpIncrement:
                 circulationPumpStartDelayMs -= circulationPumpIncrement
                 print('circulationPumpStartDelayDown')
+            elif action == '/circulationPumpUseLED?':
+                circulationPumpTimer.setUseLED(True)
+                
+                solenoidLock.release()
+                solenoidTimer.setUseLED(False)
+                solenoidLock.release()
+                
+                print('circulationPumpUseLED')
             else:
                 changed = False
                 print('unknown action for circulationPump, skipping')              
@@ -201,7 +217,7 @@ while True:
                 testModeOn = False
         
         if httpMethod == 'GET':
-            response = html.format('font-size:50px;', solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs, circulationPumpOnTime, circulationPumpOffTime, circulationPumpStartDelay, testModeOn)
+            response = html.format('font-size:50px;', solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs, solenoidTimer.isUsingLED(), circulationPumpOnTime, circulationPumpOffTime, circulationPumpStartDelay, solenoidTimer.isUsingLED(), testModeOn)
             client.send(response)
             print('returning html response to ', clientAddress)
 

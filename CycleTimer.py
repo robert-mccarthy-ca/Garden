@@ -23,6 +23,8 @@ class CycleTimer:
         self.offIndex = startDelay + onTime
         self.on = False
         self.paused = False
+        self.led = Pin("LED",machine.Pin.OUT)
+        self.useLED = False
         newPin = Pin(pinNumber, Pin.OUT, Pin.PULL_DOWN)
         self.lock = _thread.allocate_lock()
         
@@ -50,12 +52,15 @@ class CycleTimer:
             self.offIndex = self.index + self.offTime
             self.index += tickSize
             print(self.name + " turning on at index " + str(self.index))
+            if self.useLED == True:
+                self.led.on()
         elif self.on == True and self.index >= self.offIndex:
             self.pin.toggle()
             self.on = False
             self.onIndex = self.index + self.onTime
             self.index += tickSize
             print(self.name + " turning off at index " + str(self.index))
+            self.led.off()
         
         self.lock.release()
             
@@ -110,3 +115,11 @@ class CycleTimer:
         self.lock.release()
         
         self.reset()
+        
+    def setUseLED(self, value):
+        self.lock.acquire()
+        self.useLED = value
+        self.lock.release()
+        
+    def isUsingLED(self):
+        return self.useLED
