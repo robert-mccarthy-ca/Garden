@@ -36,7 +36,9 @@ GardenEpic3 (In Progress):
 - Replaced the air atomizing (AA) nozzle with a waste oil burner nozzle which siphons fluid without the need for a water pump
   - removes the need for the LPA system and the water pump to the AA nozzle
 - currently not doing a very good job of things, need to tinker more with timings and pressures
-  - now getting a spray, just not enough to keep roots happy, need to fix the timer adjustment bug (Garden9)
+  - now getting a spray, just not enough to keep roots happy (lots of them poking out, but none growing any significant distance into the air chamber), need to fix the timer adjustment bug (Garden9)
+- timer fixed, now spraying at 43 psi for 3 seconds, will see how that goes
+  - noticed that the spray got better further away from the nozzle, may have to redesign the chamber to allow for that
 
 GardenEpic4 (In Progress):
 -------------------------
@@ -68,6 +70,7 @@ Key requirements
       - don't let the roots dry out
       - don't have the roots dripping either
     - make sure the nozzle is pointed in a way that fills the root chamber without harming the roots
+    - make sure the nozzle is at an appropriate distance to get full atomization
 
 - GardenEpic4 (In Progress) (relies on GardenEpic2), Clean up the interface and general refactoring/improving
   - Garden8 (InProgress) Have the onboard LED assignable to a timer for testing
@@ -79,6 +82,7 @@ Key requirements
   - load configuration from file
   - make the interface not look like ass
     - proper buttons, arrows, text entry areas
+    - proper resolution
     - reset buttons
     - disable button (always off)
     - always on button
