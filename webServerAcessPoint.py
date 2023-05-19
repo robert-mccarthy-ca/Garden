@@ -7,8 +7,8 @@ from cycleTimer import CycleTimer
 from picozero import pico_led
 
 # for demonstration purposes, use your own credentials
-ssid = '<AccessPointTest2>'
-wifiPass = 'dingleberries'
+ssid = '<your ssid here>'
+wifiPass = '<your wifi password here>'
 
 # timer resolution in milliseconds
 # Lower for better resolution, raise for lower power consumption
@@ -140,28 +140,33 @@ while True:
         except IndexError:
             pass
         
+        # sort this by httpMethod, currently we don't care what action they want
         if action.startswith('/solenoid'):
             solenoidLock.acquire()
             
-            changed = True
-            
             if action == '/solenoidOnTimeUp?':
                 solenoidOnTimeMs += solenoidIncrementMs
+                solenoidTimer.setOnDuration(solenoidOnTimeMs)
                 print('solenoidOnTimeUp')
             elif action == '/solenoidOffTimeUp?':
                 solenoidOffTimeMs += solenoidIncrementMs
+                solenoidTimer.setOffDuration(solenoidOffTimeMs)
                 print('solenoidOffTimeUp')
             elif action == '/solenoidStartDelayUp?':
                 solenoidStartDelayMs += solenoidIncrementMs
+                solenoidTimer.setStartDelay(solenoidStartDelayMs)
                 print('solenoidStartDelayUp')
             elif action == '/solenoidOnTimeDown?' and solenoidOnTimeMs >= 0:
                 solenoidOnTimeMs -= solenoidIncrementMs
+                solenoidTimer.setOnDuration(solenoidOnTimeMs)
                 print('solenoidOnTimeDown')
             elif action == '/solenoidOffTimeDown?' and solenoidOffTimeMs >= 0:
                 solenoidOffTimeMs -= solenoidIncrementMs
+                solenoidTimer.setOffDuration(solenoidOffTimeMs)
                 print('solenoidOffTimeDown')
             elif action == '/solenoidStartDelayDown?' and solenoidStartDelayMs >= 0:
                 solenoidStartDelayMs -= solenoidIncrementMs
+                solenoidTimer.setStartDelay(solenoidStartDelayMs)
                 print('solenoidStartDelayDown')
             elif action == '/solenoidSetUseLED?':
                 solenoidTimer.setUseLED(True)
@@ -170,54 +175,48 @@ while True:
                 circulationPumpTimer.setUseLED(False)
                 circulationPumpLock.release()
                 
-                print('solenoidSetUseLed')
+                print('solenoidSetUseLED')
             else:
-                changed = False
-                print('unknown action for solenoid, skipping')               
-            
-            if changed:
-                solenoidTimer.reinitialize(solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs)
-                print('reinitializing solenoid timer')
+                print('unknown action for solenoid, skipping')
                 
             solenoidLock.release()
         elif action.startswith('/circulationPump'):
             circulationPumpLock.acquire()
             
-            changed = True
-            
             if action == '/circulationPumpOnTimeUp?':
                 circulationPumpOnTimeMs += circulationPumpIncrementMs
+                circulationPumpTimer.setOnDuration(circulationPumpOnTimeMs)
                 print('circulationPumpOnTimeUp')
             elif action == '/circulationPumpOffTimeUp?':
                 circulationPumpOffTimeMs += circulationPumpIncrementMs
+                circulationPumpTimer.setOffDuration(circulationPumpOffTimeMs)
                 print('circulationPumpOffTimeUp')
             elif action == '/circulationPumpStartDelayUp?':
                 circulationPumpStartDelayMs += circulationPumpIncrementMs
+                circulationPumpTimer.setStartDelay(circulationPumpStartDelayMs)
                 print('circulationPumpStartDelayUp')
             elif action == '/circulationPumpOnTimeDown?' and circulationPumpOnTimeMs >= 0:
                 circulationPumpOnTimeMs -= circulationPumpIncrementMs
+                circulationPumpTimer.setOnDuration(circulationPumpOnTimeMs)
                 print('circulationPumpOnTimeDown')
             elif action == '/circulationPumpOffTimeDown?' and circulationPumpOffTimeMs >= 0:
                 circulationPumpOffTimeMs -= circulationPumpIncrementMs
+                circulationPumpTimer.setOffDuration(circulationPumpOffTimeMs)
                 print('circulationPumpOffTimeDown')
             elif action == '/circulationPumpStartDelayDown?' and circulationPumpStartDelayMs >= 0:
                 circulationPumpStartDelayMs -= circulationPumpIncrementMs
+                circulationPumpTimer.setStartDelay(circulationPumpStartDelayMs)
                 print('circulationPumpStartDelayDown')
-            elif action == '/circulationPumpUseLED?':
+            elif action == '/circulationPumpSetUseLED?':
                 circulationPumpTimer.setUseLED(True)
                 
-                solenoidLock.release()
+                solenoidLock.acquire()
                 solenoidTimer.setUseLED(False)
                 solenoidLock.release()
                 
                 print('circulationPumpUseLED')
             else:
-                changed = False
-                print('unknown action for circulationPump, skipping')              
-            
-            if changed:
-                circulationPumpTimer.reinitialize(circulationPumpOnTimeMs, circulationPumpOffTimeMs, circulationPumpStartDelayMs)
-                print('reinitializing circulation pump timer')
+                print('unknown action for circulationPump, skipping')
                 
             circulationPumpLock.release()
         elif action == '/testModeOn?':
@@ -228,6 +227,13 @@ while True:
             if testModeOn == True:
                 swapAndReset()
                 testModeOn = False
+        elif action == '/ledOff?':
+            solenoidLock.acquire()
+            solenoidTimer.setUseLED(False)
+            solenoidLock.release()
+            circulationPumpLock.acquire()
+            circulationPumpTimer.setUseLED(False)
+            circulationPumpLock.release()
         
         if httpMethod == 'GET':
             response = html.format('{font-size:50px;}', solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs, solenoidTimer.isUsingLED(), circulationPumpOnTimeMs, circulationPumpOffTimeMs, circulationPumpStartDelayMs, solenoidTimer.isUsingLED(), testModeOn)
