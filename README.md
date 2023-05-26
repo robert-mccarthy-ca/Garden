@@ -1,9 +1,11 @@
 # CyberGarden
 Automated control software for my hybrid soil/aeroponic garden.
+Control interface is via local wifi hotspot and a web site running on a Raspberry Pi Pico W.
+Adjustable cycle timers with a toggleable test settings mode
 
 Introduction
 ------------
-I started with building a three way hybrid grow system where the top few inches are soil, the bottom of that being wire mesh and burlap. Below this is an aeroponic root chamber. In this chamber I have 2 systems, a low pressure aeroponic (LPA) system and an air atomized aeroponic (AAA) system. This requires both a low pressure system for spraying the biology across the roots without shredding them and an air atomized system  for the main nutrient and oxygen delivery to the root system. The idea behind this build is to blend Korean Natural Farming (KNF) techniques with modern hydroponics in both living soil and a living reservoir for maximum growth (aeroponics and nutrient delivery) while maintaining maximum crop quality (microbiological diversity).
+I started with building a three way hybrid grow system where the top few inches are soil, the bottom of that being wire mesh and burlap. Below this is an aeroponic root chamber. In this chamber I have 2 systems, a low pressure aeroponic (LPA) system and an air atomized aeroponic (AAA) system. This requires both a low pressure system for spraying the biology across the roots without shredding them and an air atomized system  for the main nutrient and oxygen delivery to the root system. The idea behind this build is to attempt to blend Korean Natural Farming (KNF) techniques with modern hydroponics in both living soil and a living reservoir for maximum growth (aeroponics and nutrient delivery) while maintaining maximum crop quality (microbiological diversity).
 
 This approach required a water pump for the low pressure aeroponic portion, another water pump for reservoir circulation, and an air atomizing nozzle, which in turn requried a water pump and an air compressor. I found a better nozzle however, a waste oil burner nozzle, which siphons the fluid out and has a 2 mm orifice. This removes the need for the water pump for the air atomizing nozzle, and removes the need for the low pressure system altogether, saving 2 pumps.
 
@@ -45,8 +47,8 @@ GardenEpic4 (In Progress):
 - Removed old timers for LPA and AA water pumps
 - Added timer for circulation pump
 
-Key requirements
-----------------
+Key requirements and goals:
+--------------------------
 - GardenEpic1 (Done) Prototype working
   - Garden1 (Done) Frame built
   - Garden2 (Done) Low pressure pump and nozzles working on a cycle timer
@@ -98,12 +100,12 @@ Key requirements
   - new chamber for roots that doesn't/can't leak
   - proper drain system/sump
   - easy way to lift the soil portion to inspect/adjust things
-  - central reservoirs, veg, flower, and a sprare for experiments/quarantine
+  - central reservoirs, veg, flower, and a spare for experiments/quarantine
   - can this be redesigned to use a shared shared nozzle via tubing/solenoid valves, or is the nozzle cheaper, see what the options are
   - additional grow stations (initial plan is six stations, further plans for another 4-5)
   - each grow station should be able to change between taking a veg or flower nutrient feed and drain to the respective sump
   - sump needs to empty to the respective reservoir
-  - reservoirs should be getting topped up via float valve from dehumidifier water so I don't have to keep emptying it
+  - reservoirs should be getting topped up via float valve from filtered dehumidifier water so I don't have to keep emptying it (it's already distilled water, just filtering any dust/dirt from the fins)
 	
 - GardenEpic6, Port to Android
   - details to be determined later
