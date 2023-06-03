@@ -1,5 +1,6 @@
-# CyberGarden
-Automated control software for my hybrid soil/aeroponic garden.
+# Garden Control Software
+# Soil/Aeroponic Modular Garden
+Automated control software for my hybrid soil/aeroponic garden. Because if you're going to grow indoors in an artifical environment, make it an awesome one. Use an air compressor kind of bonkers
 Control interface is via local wifi hotspot and a web site running on a Raspberry Pi Pico W.
 Adjustable cycle timers with a toggleable test settings mode
 
@@ -41,6 +42,7 @@ GardenEpic3 (In Progress):
   - now getting a spray, just not enough to keep roots happy (lots of them poking out, but none growing any significant distance into the air chamber), need to fix the timer adjustment bug (Garden9)
 - timer fixed, now spraying at 43 psi for 3 seconds, will see how that goes
   - noticed that the spray got better further away from the nozzle, may have to redesign the chamber to allow for that
+- (June 3, 2023) Had good root growth, but only in a small area in the center with the current setup (Images/Roots_June_3_2023.jpg). I've adjusted the nozzle a few times to get there, this was with the nozzle directly in the center of the root chamber at the bottom pointing up. I've adjusted the pressure to be 20 psi, which looks to be enough with the heduced siphon head to keep a mist. I should probably experiment with using a pressure regulated water pump in combination for the next iteration. Increased the cycle length to 1.6 seconds on and 59 seconds off. Need to make something better for the interface, as the off time changed by 0.1 seconds at a time is ridiculous, time to write something better. I've also adjusted the nozzle to be pointed at the corner without anything planted in it, to bounce back around the rest of the root chamber hopefully. Chamber shape is definitely going to be key on the next build, need to see what density is best first before I can make something better.
 
 GardenEpic4 (In Progress):
 -------------------------
