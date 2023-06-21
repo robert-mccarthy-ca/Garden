@@ -43,6 +43,7 @@ GardenEpic3 (In Progress):
 - timer fixed, now spraying at 43 psi for 3 seconds, will see how that goes
   - noticed that the spray got better further away from the nozzle, may have to redesign the chamber to allow for that
 - (June 3, 2023) Had good root growth, but only in a small area in the center with the current setup (Images/Roots_June_3_2023.jpg). I've adjusted the nozzle a few times to get there, this was with the nozzle directly in the center of the root chamber at the bottom pointing up. I've adjusted the pressure to be 20 psi, which looks to be enough with the heduced siphon head to keep a mist. I should probably experiment with using a pressure regulated water pump in combination for the next iteration. Increased the cycle length to 1.6 seconds on and 59 seconds off. Need to make something better for the interface, as the off time changed by 0.1 seconds at a time is ridiculous, time to write something better. I've also adjusted the nozzle to be pointed at the corner without anything planted in it, to bounce back around the rest of the root chamber hopefully. Chamber shape is definitely going to be key on the next build, need to see what density is best first before I can make something better.
+- (June 21, 2023) Have had mixed success. Lower pressures seemed to work better, but only at very select ranges. The current design of the root chamber is just bad. New design ready to build, will use a root chamber that is between a sealed inlet and the other end will be for airflow out of the root chamber so all mist has to go through the root area to leave and has far enough to atomize properly, and installing a second sprayer head to increase volume.
 
 GardenEpic4 (In Progress):
 -------------------------
@@ -77,16 +78,16 @@ Key requirements and goals:
     - make sure the nozzle is at an appropriate distance to get full atomization
 
 - GardenEpic4 (In Progress) (relies on GardenEpic2), Clean up the interface and general refactoring/improving
-  - Garden8 (InProgress) Have the onboard LED assignable to a timer for testing
-  - Garden9 (InProgress) Fix timing bug that blows up when you adjust the timings upwards to the solenoid in test mode
+  - Garden8 (Done) Have the onboard LED assignable to a timer for testing
+  - Garden9 (Done) Fix timing bug that blows up when you adjust the timings upwards to the solenoid in test mode
     - CycleTimer now in milliseconds and simply increments to the next index since Python has no rollover limitations like the ESP32 had
     - Can now set individual settings without resetting the timer, allowing for adjusting timings by small increments without a bajillion resets
-  - Garden10 (In Progress) update interface with new timer configuration for solenoid and circulation pump, removing old LPA water pump and AA water pump timers
-  - file persistence
-  - load configuration from file
-  - make the interface not look like ass
-    - proper buttons, arrows, text entry areas
-    - proper resolution
+  - Garden10 (Done) update interface with new timer configuration for solenoid and circulation pump, removing old LPA water pump and AA water pump timers
+  - Garden11 (Done) use text inputs instead of submit buttons
+  - Garden12 (Done) html is now generated from the classes as needed instead of having a fixed index.html file
+  - Garden13 (In Progress) make the interface not look like ass
+    - proper buttons, arrows, text entry areas (Done)
+    - proper resolution (Done)
     - reset buttons
     - disable button (always off)
     - always on button
@@ -94,6 +95,8 @@ Key requirements and goals:
     - load changes
     - save changes
     - clean up the html code
+  - file persistence
+  - load configuration from file
   - final refactoring of all code
 	
 - GardenEpic5 (relies on GardenEpic3 and GardenEpic4), Replace the prototype with a new version
