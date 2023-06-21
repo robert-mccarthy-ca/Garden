@@ -7,8 +7,8 @@ from cycleTimer import CycleTimer
 from picozero import pico_led
 
 # for demonstration purposes, use your own credentials
-ssid = '<your ssid here>'
-wifiPass = '<your wifi password here>'
+ssid = 'Demon Portal'
+wifiPass = 'purplepolkadots'
 
 # timer resolution in milliseconds
 # Lower for better resolution, raise for lower power consumption
@@ -26,22 +26,22 @@ solenoidIncrementMs = 100
 solenoidLock = _thread.allocate_lock()
 solenoidTimer = CycleTimer("Solenoid Timer", solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs, False, tickSizeMs, solenoidPin)
 
-# circulation pump for the reservoir
-circulationPumpPin = 17
-circulationPumpOnTimeMs = 60000
-circulationPumpOffTimeMs = 1800000
-circulationPumpStartDelayMs = 0
-circulationPumpIncrementMs = 1000
-circulationPumpLock = _thread.allocate_lock()
-circulationPumpTimer = CycleTimer("Circulation Pump Timer", circulationPumpOnTimeMs, circulationPumpOffTimeMs, circulationPumpStartDelayMs, True, tickSizeMs, circulationPumpPin)
+# lpa pump for the reservoir
+lpaPumpPin = 17
+lpaPumpOnTimeMs = 60000
+lpaPumpOffTimeMs = 1800000
+lpaPumpStartDelayMs = 0
+lpaPumpIncrementMs = 1000
+lpaPumpLock = _thread.allocate_lock()
+lpaPumpTimer = CycleTimer("LPA Pump Timer", lpaPumpOnTimeMs, lpaPumpOffTimeMs, lpaPumpStartDelayMs, True, tickSizeMs, lpaPumpPin)
 
 testSolenoidOnTimeMs = 1000
 testSolenoidOffTimeMs = 3000
 testSolenoidStartDelayMs = 0
 
-testCirculationPumpOnTimeMs = 10000
-testCirculationPumpOffTimeMs = 10000
-testCirculationPumpStartDelayMs = 0
+testlpaPumpOnTimeMs = 10000
+testlpaPumpOffTimeMs = 10000
+testlpaPumpStartDelayMs = 0
 
 testModeOn = False
 
@@ -52,9 +52,9 @@ def runTimers():
         solenoidTimer.tick()
         solenoidLock.release()
         
-        circulationPumpLock.acquire()
-        circulationPumpTimer.tick()
-        circulationPumpLock.release()
+        lpaPumpLock.acquire()
+        lpaPumpTimer.tick()
+        lpaPumpLock.release()
         
         index += 1
         # sleep for however long our tick size is
@@ -70,12 +70,12 @@ def swapAndReset():
     global testSolenoidOffTimeMs
     global solenoidStartDelayMs
     global testSolenoidStartDelayMs
-    global circulationPumpOnTimeMs
-    global testCirculationPumpOnTimeMs
-    global circulationPumpOffTimeMs
-    global testCirculationPumpOffTimeMs
-    global circulationPumpStartDelayMs
-    global testCirculationPumpStartDelayMs
+    global lpaPumpOnTimeMs
+    global testlpaPumpOnTimeMs
+    global lpaPumpOffTimeMs
+    global testlpaPumpOffTimeMs
+    global lpaPumpStartDelayMs
+    global testlpaPumpStartDelayMs
     
     solenoidLock.acquire()
     
@@ -86,13 +86,74 @@ def swapAndReset():
     
     solenoidLock.release()
     
-    circulationPumpLock.acquire()
+    lpaPumpLock.acquire()
     
-    circulationPumpOnTimeMs, testCirculationPumpOnTimeMs = testCirculationPumpOnTimeMs, circulationPumpOnTimeMs
-    circulationPumpOffTimeMs, testCirculationPumpOffTimeMs = testCirculationPumpOffTimeMs, circulationPumpOffTimeMs
-    circulationPumpStartDelayMs, testCirculationPumpStartDelayMs = testCirculationPumpStartDelayMs, circulationPumpStartDelayMs
+    lpaPumpOnTimeMs, testlpaPumpOnTimeMs = testlpaPumpOnTimeMs, lpaPumpOnTimeMs
+    lpaPumpOffTimeMs, testlpaPumpOffTimeMs = testlpaPumpOffTimeMs, lpaPumpOffTimeMs
+    lpaPumpStartDelayMs, testlpaPumpStartDelayMs = testlpaPumpStartDelayMs, lpaPumpStartDelayMs
+    lpaPumpTimer.reinitialize(lpaPumpOnTimeMs, lpaPumpOffTimeMs, lpaPumpStartDelayMs)
     
-    circulationPumpLock.release()
+    lpaPumpLock.release()
+
+def getParameters(actionString):
+    print('debug start')
+    print(f'actionString: {actionString}')
+    parameters = actionString.split('?')
+    print(f'parameters: {parameters}')
+    if len(parameters) < 2 or len(parameters[1]) == 0:
+        return parameters[0], None
+    splitParameters = parameters[1].split('&')
+    print(f'splitParameters: {splitParameters}')
+    keys = []
+    values = []
+    
+    for index, parameter in enumerate(splitParameters):
+        print(f'index: {index}, parameter: {parameter}')
+        pair = parameter.split('=')
+        if pair == None or len(pair) < 2:
+            pass
+        keys.append(pair[0])
+        values.append(pair[1])
+        
+    result = dict(zip(keys, values))
+    print(f'result: {result}')
+    print('debug end')
+    return parameters[0], result
+
+def getTestModeElement():
+    global testModeOn
+    
+    firstPart = '<p>Test Mode:</p><p><form action="./testModeOn"><input type="submit" value="Test Mode On" /></form>'
+    secondPart = '<form action="./testModeOff"><input type="submit" value="Test Mode Off" /></form></p>'
+    
+    result = firstPart + str(testModeOn) + secondPart
+    return result
+
+def getHtmlBody():
+    global solenoidTimer
+    global lpaPumpTimer
+    
+    htmlBodyStart = '<body><h1>Hortus Deorum</h1><hr>\n'
+    solenoidElement = solenoidTimer.toHtmlElement('airForm', 'airLedOn', 'airLedOff')
+    lpaPumpElement = lpaPumpTimer.toHtmlElement('lpaPumpForm', 'lpaLedOn', 'lpaLedOff')
+    testModeElement = getTestModeElement()
+    htmlBodyEnd = '</body>\n'
+    gap = '<hr>\n'
+    
+    result = htmlBodyStart + solenoidElement + gap + lpaPumpElement + gap + testModeElement + htmlBodyEnd
+    return result
+
+def buildHtml():
+    doctype = '<!DOCTYPE html>\n'
+    htmlOpen = '<html lang="en">\n'
+    htmlMeta = '<meta name="viewport" content="width=device-width, initial-scale=1" /><meta charset="UTF-8" />'
+    style = '<style>{font-size:50px;box-sizing: border-box;}</style>'
+    htmlHead = '<head><title>Hortus Deorum</title>' + htmlMeta + style + '</head>\n'
+    htmlBody = getHtmlBody()
+    htmlEnd = '</html>\n'
+    
+    result = doctype + htmlOpen + htmlHead + htmlBody + htmlEnd
+    return result
 
 accessPoint = network.WLAN(network.AP_IF)
 accessPoint.config(essid=ssid, password=wifiPass)
@@ -140,105 +201,68 @@ while True:
         except IndexError:
             pass
         
-        # sort this by httpMethod, currently we don't care what action they want
-        if action.startswith('/solenoid'):
+        parameters = getParameters(action)
+        target = parameters[0]
+        print('target: ', target)
+        dictionary = parameters[1]
+        print('actionDictionary:', dictionary)
+        
+        if target == '/airForm':
             solenoidLock.acquire()
-            
-            if action == '/solenoidOnTimeUp?':
-                solenoidOnTimeMs += solenoidIncrementMs
-                solenoidTimer.setOnDuration(solenoidOnTimeMs)
-                print('solenoidOnTimeUp')
-            elif action == '/solenoidOffTimeUp?':
-                solenoidOffTimeMs += solenoidIncrementMs
-                solenoidTimer.setOffDuration(solenoidOffTimeMs)
-                print('solenoidOffTimeUp')
-            elif action == '/solenoidStartDelayUp?':
-                solenoidStartDelayMs += solenoidIncrementMs
-                solenoidTimer.setStartDelay(solenoidStartDelayMs)
-                print('solenoidStartDelayUp')
-            elif action == '/solenoidOnTimeDown?' and solenoidOnTimeMs >= 0:
-                solenoidOnTimeMs -= solenoidIncrementMs
-                solenoidTimer.setOnDuration(solenoidOnTimeMs)
-                print('solenoidOnTimeDown')
-            elif action == '/solenoidOffTimeDown?' and solenoidOffTimeMs >= 0:
-                solenoidOffTimeMs -= solenoidIncrementMs
-                solenoidTimer.setOffDuration(solenoidOffTimeMs)
-                print('solenoidOffTimeDown')
-            elif action == '/solenoidStartDelayDown?' and solenoidStartDelayMs >= 0:
-                solenoidStartDelayMs -= solenoidIncrementMs
-                solenoidTimer.setStartDelay(solenoidStartDelayMs)
-                print('solenoidStartDelayDown')
-            elif action == '/solenoidSetUseLED?':
-                solenoidTimer.setUseLED(True)
-                
-                circulationPumpLock.acquire()
-                circulationPumpTimer.setUseLED(False)
-                circulationPumpLock.release()
-                
-                print('solenoidSetUseLED')
-            else:
-                print('unknown action for solenoid, skipping')
-                
+            solenoidTimer.reinitialize(int(dictionary['onTime']),
+                                       int(dictionary['offTime']),
+                                       int(dictionary['startDelay']))
             solenoidLock.release()
-        elif action.startswith('/circulationPump'):
-            circulationPumpLock.acquire()
-            
-            if action == '/circulationPumpOnTimeUp?':
-                circulationPumpOnTimeMs += circulationPumpIncrementMs
-                circulationPumpTimer.setOnDuration(circulationPumpOnTimeMs)
-                print('circulationPumpOnTimeUp')
-            elif action == '/circulationPumpOffTimeUp?':
-                circulationPumpOffTimeMs += circulationPumpIncrementMs
-                circulationPumpTimer.setOffDuration(circulationPumpOffTimeMs)
-                print('circulationPumpOffTimeUp')
-            elif action == '/circulationPumpStartDelayUp?':
-                circulationPumpStartDelayMs += circulationPumpIncrementMs
-                circulationPumpTimer.setStartDelay(circulationPumpStartDelayMs)
-                print('circulationPumpStartDelayUp')
-            elif action == '/circulationPumpOnTimeDown?' and circulationPumpOnTimeMs >= 0:
-                circulationPumpOnTimeMs -= circulationPumpIncrementMs
-                circulationPumpTimer.setOnDuration(circulationPumpOnTimeMs)
-                print('circulationPumpOnTimeDown')
-            elif action == '/circulationPumpOffTimeDown?' and circulationPumpOffTimeMs >= 0:
-                circulationPumpOffTimeMs -= circulationPumpIncrementMs
-                circulationPumpTimer.setOffDuration(circulationPumpOffTimeMs)
-                print('circulationPumpOffTimeDown')
-            elif action == '/circulationPumpStartDelayDown?' and circulationPumpStartDelayMs >= 0:
-                circulationPumpStartDelayMs -= circulationPumpIncrementMs
-                circulationPumpTimer.setStartDelay(circulationPumpStartDelayMs)
-                print('circulationPumpStartDelayDown')
-            elif action == '/circulationPumpSetUseLED?':
-                circulationPumpTimer.setUseLED(True)
-                
-                solenoidLock.acquire()
-                solenoidTimer.setUseLED(False)
-                solenoidLock.release()
-                
-                print('circulationPumpUseLED')
-            else:
-                print('unknown action for circulationPump, skipping')
-                
-            circulationPumpLock.release()
-        elif action == '/testModeOn?':
-            if testModeOn == False:
-                swapAndReset()
-                testModeOn = True
-        elif action == '/testModeOff?':
-            if testModeOn == True:
-                swapAndReset()
-                testModeOn = False
-        elif action == '/ledOff?':
+            print('airForm fired')
+        elif target == '/lpaForm':
+            lpaLock.acquire()
+            lpaPumpTimer.reinitialize(int(dictionary['onTime']),
+                                  int(dictionary['offTime']),
+                                  int(dictionary['startDelay']))
+            lpaLock.release()
+            print('lpaForm fired')
+        elif target == '/airLedOn':
+            solenoidLock.acquire()
+            solenoidTimer.setUseLED(True)
+            lpaPumpLock.acquire()
+            lpaPumpTimer.setUseLED(False)
+            lpaPumpLock.release()
+            solenoidLock.release()
+            print('airLedOn fired')
+        elif target == '/airLedOff':
             solenoidLock.acquire()
             solenoidTimer.setUseLED(False)
             solenoidLock.release()
-            circulationPumpLock.acquire()
-            circulationPumpTimer.setUseLED(False)
-            circulationPumpLock.release()
+            print('airLedOff fired')
+        elif target == '/lpaLedOn':
+            lpaPumpLock.acquire()
+            lpaPumpTimer.setUseLED(True)
+            solenoidLock.acquire()
+            solenoidTimer.setUseLED(False)
+            solenoidLock.release()
+            lpaPumpLock.release()
+            print('lpaLedOn fired')
+        elif target == '/lpaLedOff':
+            lpaPumpLock.acquire()
+            lpaPumpTimer.setUseLED(False)
+            lpaPumpLock.release()
+            print('lpaLedOff fired')
+        elif target == '/testModeOn':
+            if testModeOn == False:
+                swapAndReset()
+                testModeOn = True
+        elif target == '/testModeOff':
+            if testModeOn == True:
+                swapAndReset()
+                testModeOn = False            
         
         if httpMethod == 'GET':
-            response = html.format('{font-size:50px;}', solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs, solenoidTimer.isUsingLED(), circulationPumpOnTimeMs, circulationPumpOffTimeMs, circulationPumpStartDelayMs, solenoidTimer.isUsingLED(), testModeOn)
+            if target == '/favicon.ico':
+                response = 'HTTP/1.1 404 Not Found\nConnection: close\n\n'
+            else:
+                response = buildHtml()
             client.send(response)
-            print('returning html response to ', clientAddress)
+            print('returning html response to ', clientAddress, ':\n', response)
 
         client.close()
 

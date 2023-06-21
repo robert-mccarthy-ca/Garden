@@ -16,6 +16,7 @@ import _thread
 
 class CycleTimer:
     def __init__(self, name, onTimeMs, offTimeMs, startDelayMs, startPinHigh, tickSizeMs, pinNumber):
+        self.name = name
         self.prefix = name + ' - '
         self.onDuration = onTimeMs
         self.offDuration = offTimeMs 
@@ -138,5 +139,51 @@ class CycleTimer:
         print(self.prefix + 'UseLED set to ' + str(self.useLED))
         self.lock.release()
         
+    def getInputString(self, name, message, value):
+        labelString = f'<label for="{name}">{message}</label>\n'
+        inputString = f'<input type="text" id="{name}" name="{name}" value="{str(value)}">\n'
+        breakString = '<br>'
+        
+        result = labelString + inputString + breakString
+        return result
+        
     def isUsingLED(self):
         return self.useLED
+    
+    def toHtmlElement(self, target, ledOnTarget, ledOffTarget):
+        print(f'toHtmlElement(self, target, ledOnTarget, ledOffTarget) called')
+        mainFormStartOpen = '<form action="./' + target + '">\n'
+        onTimeInput = self.getInputString('onTime', self.name + ' Time On (seconds)', self.onDuration)
+        offTimeInput = self.getInputString('offTime', self.name + ' Time Off (seconds)', self.offDuration)
+        startDelayInput = self.getInputString('startDelay', self.name + ' Time Start Delay (seconds)', self.startDelay)
+        submitButton = '<input type="submit" value="Submit">\n<br>\n<br>\n'
+        formEnd = '</form>\n'
+        ledOn = '<form action="./' + ledOnTarget + '">\n<input type="submit" value="LED On">\n' + '</form>\n'
+        ledOff = '<form action="./' + ledOffTarget + '">\n<input type="submit" value="LED Off">\n' + '</form>\n'
+        
+        elementStart = '<p>\n'
+        header = '<h3>' + self.name + '</h3>\n'
+        mainFormString = mainFormStartOpen + onTimeInput + offTimeInput + startDelayInput + submitButton + formEnd
+        ledString = ledOn + str(self.on and self.useLED) + '\n' + ledOff
+        elementClose = '<p>\n'
+        
+        result = elementStart + header + mainFormString + ledString + elementClose
+        return result
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
