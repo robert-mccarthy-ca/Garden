@@ -17,11 +17,20 @@ tickSizeMs = 100
 # onboard LED for testing timers with
 led = machine.Pin("LED",machine.Pin.OUT)
 
+# water pump for the sprayer nozzle
+aaPumpPin = 15
+aaPumpOnTimeMs = 5000
+aaPumpOffTimeMs = 35000
+aaPumpStartDelayMs = 0
+aaPumpIncrementMs = 100
+aaPumpLock = _thread.allocate_lock()
+aaPumpTimer = CycleTimer("Nozzle Pump Timer", aaPumpOnTimeMs, aaPumpOffTimeMs, aaPumpStartDelayMs, True, tickSizeMs, aaPumpPin)
+
 # controls the solenoid for the air line leading to the nozzle
 solenoidPin = 16
 solenoidOnTimeMs = 1000
-solenoidOffTimeMs = 59000
-solenoidStartDelayMs = 0
+solenoidOffTimeMs = 39000
+solenoidStartDelayMs = 2000
 solenoidIncrementMs = 100
 solenoidLock = _thread.allocate_lock()
 solenoidTimer = CycleTimer("Solenoid Timer", solenoidOnTimeMs, solenoidOffTimeMs, solenoidStartDelayMs, False, tickSizeMs, solenoidPin)
@@ -34,6 +43,10 @@ lpaPumpStartDelayMs = 0
 lpaPumpIncrementMs = 1000
 lpaPumpLock = _thread.allocate_lock()
 lpaPumpTimer = CycleTimer("LPA Pump Timer", lpaPumpOnTimeMs, lpaPumpOffTimeMs, lpaPumpStartDelayMs, True, tickSizeMs, lpaPumpPin)
+
+testAaPumpOnTimeMs = 1000
+testAaPumpOffTimeMs = 3000
+testAaPumpStartDelayMs = 0
 
 testSolenoidOnTimeMs = 1000
 testSolenoidOffTimeMs = 3000
@@ -56,6 +69,10 @@ def runTimers():
         lpaPumpTimer.tick()
         lpaPumpLock.release()
         
+        aaPumpLock.acquire()
+        aaPumpTimer.tick()
+        aaPumpLock.release()
+        
         index += 1
         # sleep for however long our tick size is
         utime.sleep_ms(tickSizeMs)
@@ -76,6 +93,12 @@ def swapAndReset():
     global testlpaPumpOffTimeMs
     global lpaPumpStartDelayMs
     global testlpaPumpStartDelayMs
+    global aaPumpOnTimeMs
+    global testAaPumpOnTimeMs
+    global aaPumpOffTimeMs
+    global testAaPumpOffTimeMs
+    global aaPumpStartDelayMs
+    global testAaPumpStartDelayMs
     
     solenoidLock.acquire()
     
@@ -94,6 +117,15 @@ def swapAndReset():
     lpaPumpTimer.reinitialize(lpaPumpOnTimeMs, lpaPumpOffTimeMs, lpaPumpStartDelayMs)
     
     lpaPumpLock.release()
+    
+    aaPumpLock.acquire()
+    
+    aaPumpOnTimeMs, testAaPumpOnTimeMs = testAaPumpOnTimeMs, aaPumpOnTimeMs
+    aaPumpOffTimeMs, testAaPumpOffTimeMs = testAaPumpOffTimeMs, aaPumpOffTimeMs
+    aaPumpStartDelayMs, testAaPumpStartDelayMs = testAaPumpStartDelayMs, aaPumpStartDelayMs
+    aaPumpTimer.reinitialize(aaPumpOnTimeMs, aaPumpOffTimeMs, aaPumpStartDelayMs)
+    
+    aaPumpLock.release()
 
 def getParameters(actionString):
     print('debug start')
@@ -136,11 +168,12 @@ def getHtmlBody():
     htmlBodyStart = '<body><h1>Hortus Deorum</h1><hr>\n'
     solenoidElement = solenoidTimer.toHtmlElement('airForm', 'airLedOn', 'airLedOff')
     lpaPumpElement = lpaPumpTimer.toHtmlElement('lpaPumpForm', 'lpaLedOn', 'lpaLedOff')
+    aaPumpElement = aaPumpTimer.toHtmlElement('aaPumpForm', 'aaLedOn', 'aaLedOff')
     testModeElement = getTestModeElement()
     htmlBodyEnd = '</body>\n'
     gap = '<hr>\n'
     
-    result = htmlBodyStart + solenoidElement + gap + lpaPumpElement + gap + testModeElement + htmlBodyEnd
+    result = htmlBodyStart + solenoidElement + gap + lpaPumpElement + gap + aaPumpElement + gap + testModeElement + htmlBodyEnd
     return result
 
 def buildHtml():
@@ -164,10 +197,6 @@ while accessPoint.active() == False:
 
 print('Access point established')
 print('ifconfig = ' + str(accessPoint.ifconfig()))
-
-htmlFile = open('index.html', 'r')
-html = htmlFile.read()
-htmlFile.close()
 
 serverAddress = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
 serverSocket = socket.socket()
@@ -221,11 +250,21 @@ while True:
                                   int(dictionary['startDelay']))
             lpaLock.release()
             print('lpaForm fired')
+        elif target == '/aaForm':
+            aaLock.acquire()
+            aaPumpTimer.reinitialize(int(dictionary['onTime']),
+                                  int(dictionary['offTime']),
+                                  int(dictionary['startDelay']))
+            aaLock.release()
+            print('aaForm fired')
         elif target == '/airLedOn':
             solenoidLock.acquire()
             solenoidTimer.setUseLED(True)
             lpaPumpLock.acquire()
             lpaPumpTimer.setUseLED(False)
+            aaPumpLock.acquire()
+            aaPumpTimer.setUseLED(False)
+            aaPumpLock.release()
             lpaPumpLock.release()
             solenoidLock.release()
             print('airLedOn fired')
@@ -239,6 +278,9 @@ while True:
             lpaPumpTimer.setUseLED(True)
             solenoidLock.acquire()
             solenoidTimer.setUseLED(False)
+            aaPumpLock.acquire()
+            aaPumpTimer.setUseLED(False)
+            aaPumpLock.release()
             solenoidLock.release()
             lpaPumpLock.release()
             print('lpaLedOn fired')
@@ -247,6 +289,22 @@ while True:
             lpaPumpTimer.setUseLED(False)
             lpaPumpLock.release()
             print('lpaLedOff fired')
+        elif target == '/aaLedOn':
+            aaPumpLock.acquire()
+            aaPumpTimer.setUseLED(True)
+            solenoidLock.acquire()
+            solenoidTimer.setUseLED(False)
+            lpaPumpLock.acquire()
+            lpaPumpTimer.setUseLED(False)
+            lpaPumpLock.release()
+            solenoidLock.release()
+            aaPumpLock.release()
+            print('aaLedOn fired')
+        elif target == '/aaLedOff':
+            aaPumpLock.acquire()
+            aaPumpTimer.setUseLED(False)
+            aaPumpLock.release()
+            print('aaLedOff fired')
         elif target == '/testModeOn':
             if testModeOn == False:
                 swapAndReset()
