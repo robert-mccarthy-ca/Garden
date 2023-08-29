@@ -44,11 +44,13 @@ GardenEpic3 (In Progress):
   - noticed that the spray got better further away from the nozzle, may have to redesign the chamber to allow for that
 - (June 3, 2023) Had good root growth, but only in a small area in the center with the current setup (Images/Roots_June_3_2023.jpg). I've adjusted the nozzle a few times to get there, this was with the nozzle directly in the center of the root chamber at the bottom pointing up. I've adjusted the pressure to be 20 psi, which looks to be enough with the heduced siphon head to keep a mist. I should probably experiment with using a pressure regulated water pump in combination for the next iteration. Increased the cycle length to 1.6 seconds on and 59 seconds off. Need to make something better for the interface, as the off time changed by 0.1 seconds at a time is ridiculous, time to write something better. I've also adjusted the nozzle to be pointed at the corner without anything planted in it, to bounce back around the rest of the root chamber hopefully. Chamber shape is definitely going to be key on the next build, need to see what density is best first before I can make something better.
 - (June 21, 2023) Have had mixed success. Lower pressures seemed to work better, but only at very select ranges. The current design of the root chamber is just bad. New design ready to build, will use a root chamber that is between a sealed inlet and the other end will be for airflow out of the root chamber so all mist has to go through the root area to leave and has far enough to atomize properly, and installing a second sprayer head to increase volume.
+- (Aug 28, 2023) Good success finally. Current setup has 2 air atomizing nozzles (2.0 mm orifice) using a 5/16 nutrient feed line running at about 60 psi. Timer is 1 second on out of every 40 seconds. Small pump is attached to the feed line, which although it can spray without it, I've seen a better spray volume when it is running. Downsides include frequent leaks, both from connectors and from the drain itself. Next version must solve both of these issues.
 
 GardenEpic4 (In Progress):
 -------------------------
 - Removed old timers for LPA and AA water pumps
 - Added timer for circulation pump
+- added AA water pump back
 
 Key requirements and goals:
 --------------------------
