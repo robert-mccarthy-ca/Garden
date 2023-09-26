@@ -21,9 +21,12 @@ def connectWifi(connectionType, ssid, wifiPass):
         accessPoint = network.WLAN(network.AP_IF)
     else:
         raise Exception('Unknown connection type')
+    
+    print('Connecting to wifi as ', connectionType)
     accessPoint.config(essid=ssid, password=wifiPass)
     accessPoint.active(True)
 
+    # wait until it's connected before proceeding
     while accessPoint.active() == False:
       pass
 
@@ -121,14 +124,17 @@ def runWebServer():
     except KeyboardInterrupt:
         machine.reset()
 
+# for modifying controls across threads
 controlLock = _thread.allocate_lock()
-config = getConfigDictionary()
-ssid, password = getWifiConfig()
-controls = loadControls(config)
 
-connectWifi(config.get('connectionType', 'station'), ssid, password)
-_thread.start_new_thread(runTimers, ())
-runWebServer()
+# load our configuration from file
+config = getConfigDictionary()        # TODO
+ssid, password = getWifiConfig()      # TODO
+controls = loadControls(config)       # TODO
+
+connectWifi(config.get('connectionType', 'station'), ssid, password) # DONE
+_thread.start_new_thread(runTimers, ())                              # DONE
+runWebServer()                                                       # TODO
 
         
      
