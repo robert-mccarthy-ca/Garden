@@ -1,15 +1,23 @@
+import json
 import timers
 import utime
 import _thread
 
 def getConfigDictionary():
-    return None
+    config = None
+    with open('config.json', 'r') as configFile:
+        config = json.load(configFile, 'r')
+    return config
 
 def loadControls():
     return None
 
 def getWifiConfig():
-    return None
+    config = None
+    with open('wifi.json', 'r') as configFile:
+        config = json.load(configFile, 'r')
+
+    return config['ssid'], config['password']
 
 def buildHtml():
     return None
@@ -128,12 +136,12 @@ def runWebServer():
 controlLock = _thread.allocate_lock()
 
 # load our configuration from file
-config = getConfigDictionary()        # TODO
-ssid, password = getWifiConfig()      # TODO
+config = getConfigDictionary()
+ssid, password = getWifiConfig()
 controls = loadControls(config)       # TODO
 
-connectWifi(config.get('connectionType', 'station'), ssid, password) # DONE
-_thread.start_new_thread(runTimers, ())                              # DONE
+connectWifi(config.get('connectionType', 'station'), ssid, password)
+_thread.start_new_thread(runTimers, ())
 runWebServer()                                                       # TODO
 
         
