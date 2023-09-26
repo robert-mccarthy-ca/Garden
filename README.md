@@ -4,6 +4,7 @@ Introduction
 ------------
 I started this project to automate my indoor garden, which is pretty much a hard requirement if you want to grow plants using air atomized aeroponics (AAA), which was my goal. This software runs on a Raspberry Pi Pico W, a small microcontroller that at the time of writing is about $15 CAD. I was initially going to use a Raspberry Pi to run everything, but it turns out that a microcontroller is more than enough computing power to get the job done ... and it was actually in stock. The garden itself is a hybrid soil and aeroponic system. This is to maximize the plants exposure to beneficial microbiology, not all of which like to live in a reservoir without soil.
 The currently finishing run is using Version 1, with Version 2's design and code underway.
+
 Version 1
 ---------
 - grow tent (4' x 8')
