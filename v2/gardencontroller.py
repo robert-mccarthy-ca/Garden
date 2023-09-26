@@ -2,27 +2,63 @@ import json
 import timers
 import utime
 import _thread
+import targets
 
-def getConfigDictionary():
+def getConfigDictionary() -> dict:
     config = None
+    print('loading configuration dictionary')
     with open('config.json', 'r') as configFile:
         config = json.load(configFile, 'r')
     return config
 
-def loadControls():
-    return None
+def loadControls(config: dict) -> dict:
+    controls = None
+    print('configuring controls')
+    for name in config:
+        try:
+            controlConfig = config[name]
+            controlType = controlConfig['controlType']
+            if 'CycleTimer' == controlType:
+                onTime = controlConfig['onTime']
+                offTime = controlConfig['offTime']
+                offset = controlConfig['offset']
+                target = controlConfig['target']
+                targetType = target['targetType']
+                targetPin = target['targetPin']
+                
+                controlTarget = getTarget(targetType, targetPin)
+                control = timers.CycleTimer(name, onTime, offTime, offSet, controlTarget)
+                controls[name]=[control]
+            else:
+                raise Exception('Invalid configuration data, discarding object: ' + str(controlType))
+        except Exception as ex:
+            print('Error occurred while loading ', name)
+            print(ex)
+    
+    return controls
+
+def getControlTarget(controlType:str, pinNumber: int):
+    controlTarget: targets.ControlTarget = None
+    if controlType == 'SolidStateRelay':
+        controlTarget = targets.SolidStateRelay(pinNumber)
+    elif controlType == 'Solenoid':
+        controlTarget = targets.Solenoid(pinNumber)
+    else:
+        raise Exception('Unknown controlType: ' + str(controlType))
+    return target
 
 def getWifiConfig():
-    config = None
+    config: dict = None
+    print('loading configuration for wifi ...')
     with open('wifi.json', 'r') as configFile:
-        config = json.load(configFile, 'r')
+        config: dict = json.load(configFile, 'r')
 
     return config['ssid'], config['password']
 
 def buildHtml():
     return None
 
-def connectWifi(connectionType, ssid, wifiPass):
+def connectWifi(connectionType:str, ssid: str, wifiPass: str):
     if connectionType == 'accessPoint':
         accessPoint = network.WLAN(network.AP_IF)
     elif connectionType == 'station':
