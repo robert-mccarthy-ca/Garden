@@ -4,6 +4,7 @@ import machine
 # not thread safe
 class ControlTarget:
     def __init__(self, pinNumber):
+        self.pinNumber = pinNumber
         self.pin = Pin(pinNumber, Pin.OUT, Pin.PULL_DOWN)
         self.on = False
         self.controllerOnList = []
@@ -33,7 +34,30 @@ class SolidStateRelay(ControlTarget):
     def __init__(self, pinNumber):
         super().__init__(pinNumber)
         self.pin.off()
+    
+    def __str__(self):
+        return 'Solid State Relay, pin ' + str(self.pinNumber)
 
 class Solenoid(ControlTarget):
+    def __init__(self, pinNumber):
         super().__init__(pinNumber)
         self.pin.on()
+    
+    def __str__(self):
+        return 'Solenoid, pin ' + str(self.pinNumber)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

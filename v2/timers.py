@@ -29,9 +29,19 @@ class CycleTimer(Control):
         
         print("Created CycleTimer with name '", name, "'")
         print('  onTime: ', onTime, 'ms, offTime: ', offTime, 'ms, offset: ', offset, 'ms')
+        print('  controlTarget: ', target)
+    
+    def __str__(self) -> str:
+        p1: str = 'CycleTimer: (' + str(self.name) + ', '
+        p2: str = 'onTime=' + str(self.onTime) + ', '
+        p3: str = 'offTime=' + str(self.offTime) + ', '
+        p4: str = 'offset=' + str(self.offset) + ', '
+        p5: str = 'controlTarget: ' + str(self.target) + ')'
+        
+        return p1 + p2 + p3 + p4 + p5
     
     # sets self.on to True and turns on the target
-    def turnOff():
+    def turnOff(self):
         with self.lock:
             if self.on:
                 self.on = False
