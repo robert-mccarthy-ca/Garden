@@ -68,6 +68,7 @@ Software Requirements:
 - add thermostats
 - add data logging, temperature and humidity to start, pH and EC eventually as well
 - allow for multiple controls on the same pin (for example, a fan control that needs to start exhausting at full speed 5 minutes before the lights go off to prevent condensation, but also need to turn on when the temperature is high enough or when I press the test button)
+- allow for a single control to control multiple pins (for example, a pause button that pauses all pumps for maintenance)
 
 Files:
 - gardenController.py (rename to main.py to run live)
@@ -75,6 +76,8 @@ Files:
 - controls.py
 - timers.py
 - config.json
+- wifi.json.example (rename to wifi.json with your credentials)
+- config.json.example (rename to config.json or configure via web interface)
 
 Growing methodology:
 - no pesticides or any other form of biocide
@@ -89,4 +92,4 @@ Growing methodology:
 - low pressure aeroponic sprayers 1 minute on, 59 minutes off
 - air atomized aeroponic sprayers 2 seconds on 58 seconds off
 
-The idea behind this was to grow as organically as possible, inspired by KNF and JADAM farming practices, but still utilizing the technological gains of hydroponics. The eventual goal is to ferment my own organic nutrients in either LAB or IMO instead of having a synthetic line, but that's a project down the road, no time for it just yet.
+The idea behind this was to grow as organically as possible, inspired by KNF and JADAM farming practices (the origins of LAB, IMO, and JMS listed above), but still utilizing the technological gains of hydroponics. The eventual goal is to ferment my own organic nutrients in either LAB or IMO instead of having a synthetic line and go fully organic, but that's a project down the road, no time for it just yet.
