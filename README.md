@@ -67,7 +67,7 @@ Software Requirements:
 - handle daily timers for the lighting/cooling
 - add thermostats
 - add data logging, temperature and humidity to start, pH and EC eventually as well
-- allow for multiple controls on the same pin (for example, a fan control that needs to start exhausting at full speed 5 minutes before the lights go off to prevent condensation, but also need to turn on when the temperature is high enough or when I press the test button))
+- allow for multiple controls on the same pin (for example, a fan control that needs to start exhausting at full speed 5 minutes before the lights go off to prevent condensation, but also need to turn on when the temperature is high enough or when I press the test button)
 
 Files:
 - gardenController.py (rename to main.py to run live)
@@ -81,7 +81,7 @@ Growing methodology:
 - reuse the soil, ammending with organic amendments
 - nutrient reservoir is synthetic nutrients, RAW from NPK Industries, a dry nutrient line that I've been very happy with
 - microbes in both the soil and the reservoir (LAB, JMS, IMO, worm castings)
-  - worm castings added to a strainer bag hanging in the reservoir (about a cup once a week)
+  - worm castings added to a strainer bag hanging in the reservoir (about a cup once a week) and as a top dress for the soil
   - LAB in the reservoir (1:500) and foliarly (1:1000)
   - JMS as a foliar spray or soil drench only, not in the reservoir (1:20)
   - liquid IMO as foliar
