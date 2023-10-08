@@ -3,7 +3,7 @@ import time
 from machine import Pin
 from targets import ControlTarget
 
-class Control:
+class Controller:
     def __init__(self, name: str, targets: list):
         self.lock = _thread.allocate_lock()
         self.logPrefix: str = name + ' - '
@@ -44,7 +44,7 @@ class Control:
 # - starts in the off state
 # - tick() must be called by someone else, either on a timer or a busy loop
 # - thread safe
-class CycleTimer(Control):
+class CycleTimer(Controller):
     # Args:
     #    name: str - display name for the timer
     #    onTime: int - on time in milliseconds
