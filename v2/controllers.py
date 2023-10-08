@@ -1,4 +1,6 @@
 import _thread
+import time
+from machine import Pin
 from targets import ControlTarget
 
 class Control:
