@@ -62,7 +62,7 @@ class ControlTarget:
             self.pin.toggle()
 
 class SolidStateRelay(ControlTarget):
-    def __init__(self, pinNumber, name):
+    def __init__(self, pinNumber:int, name: str):
         super().__init__(pinNumber, name)
         self.pin.off()
     
