@@ -1,32 +1,38 @@
 import machine
-from builtins import False
 
-# multiple controls can be linked to the same target
-# not thread safe
+# The ControlTarget is considered on if 1 or more controllers have requested it to be on and none have requested it to be disabled
+# - multiple controls can be linked to the same target
+# - this allows for both multiple on sources such as a timer/thermostat fan controller as well as disable sources like a pause button for maintenance
+# - not thread safe
 class ControlTarget:
-    def __init__(self, name, pinNumber):
-        self.pinNumber = pinNumber
-        self.pin = Pin(pinNumber, Pin.OUT, Pin.PULL_DOWN)
-        self.on = False
-        self.disabled = False
-        self.name = name
-        self.controllerOnList = []
+    # Args:
+    #   name: str - name of this control
+    #   pinNumber: int - the pin number on the Pico W
+    def __init__(self, name: str, pinNumber: int):
+        self.pinNumber: int = pinNumber
+        self.pin: Pin = Pin(pinNumber, Pin.OUT, Pin.PULL_DOWN)
+        self.on: bool = False
+        self.name: str = name
+        self.controllerOnList: list = []
+        self.controllerDisabledList: list = []
     
     # Args:
-    #   controlName: str - name of the calling controller
-    def on(self, controlName):
-        if self.disabled:
+    #   controlName: str - name of the calling Controller
+    def on(self, controlName: str):
+        if isDisabled():
             return
         
         self.controllerOnList[controlName] = True
         if not self.on:
+            wasOff: bool = any(self.controllerOnList)
             self.on = True
-            self.pin.toggle()
+            if wasOff:
+                self.pin.toggle()
     
     # Args:
     #   controlName: str - name of the calling controller
-    def off(self, controlName):
-        if self.disabled:
+    def off(self, controlName: str):
+        if isDisabled():
             return
         
         self.controllerOnList[controlName] = False
@@ -39,17 +45,21 @@ class ControlTarget:
     def log(self, message: str):
         print(self.logPrefix, time.time(), ' - ', message)
     
-    def disable(self):
-        if self.disabled == False:
-            self.disabled = True
-            if self.on():
-                self.pin.toggle()
+    def isDisabled(self):
+        return any(self.controllerDisabledList)
     
-    def enable(self):
-        if self.disabled:
-            self.disabled = False
-            if self.on():
-                self.pin.toggle()
+    def disable(self, controlName: str):
+        wasDisabled: bool = isDisabled()
+        self.controllerDisabledList[controlName] = True
+        if not wasDisabled and self.on():
+            self.pin.toggle()
+    
+    def enable(self, controlName: str):
+        wasDisabled: bool = isDisabled()
+        self.controllerDisabledList[controlName] = False
+        disabledNow: bool = isDisabled()
+        if wasDisabled and not disabledNow and self.on:
+            self.pin.toggle()
 
 class SolidStateRelay(ControlTarget):
     def __init__(self, pinNumber, name):
@@ -57,15 +67,15 @@ class SolidStateRelay(ControlTarget):
         self.pin.off()
     
     def __str__(self):
-        return 'Solid State Relay, pin ' + str(self.pinNumber)
+        return 'Solid State Relay, operating on pin ' + str(self.pinNumber)
 
 class Solenoid(ControlTarget):
-    def __init__(self, pinNumber, name):
+    def __init__(self, pinNumber: int, name: str):
         super().__init__(pinNumber, name)
         self.pin.on()
     
     def __str__(self):
-        return 'Solenoid, pin ' + str(self.pinNumber)
+        return 'Solenoid, operating on pin ' + str(self.pinNumber)
 
 
 
