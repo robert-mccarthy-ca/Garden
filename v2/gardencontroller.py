@@ -1,6 +1,6 @@
 import json
 import timers
-import utime
+import time
 import _thread
 import targets
 
@@ -12,48 +12,55 @@ def getConfigDictionary() -> dict:
     return config
 
 def loadControls(config: dict) -> dict:
-    controls = None
+    controls: dict = {}
     print('configuring controls')
     for name in config:
         try:
-            controlConfig = config[name]
-            controlType = controlConfig['controlType']
-            if 'CycleTimer' == controlType:
-                onTime = controlConfig['onTime']
-                offTime = controlConfig['offTime']
-                offset = controlConfig['offset']
-                target = controlConfig['target']
-                targetType = target['targetType']
-                targetPin = target['targetPin']
+            controlConfig: dict = config[name]
+            controlType: str = str(controlConfig['controlType'])
+            controlTargets: list = getControlTargets(controlConfig['controlTargets'])
                 
-                controlTarget = getTarget(targetType, targetPin)
-                control = timers.CycleTimer(name, onTime, offTime, offSet, controlTarget)
-                controls[name]=[control]
+            if 'CycleTimer' == controlType:
+                onTime: int = controlConfig['onTime']
+                offTime: int = controlConfig['offTime']
+                offset: int = controlConfig['offset']
+                
+                control: timers.CycleTimer = timers.CycleTimer(name, onTime, offTime, offSet, controlTargets)
+                controls[name] = control
             else:
                 raise Exception('Invalid configuration data, discarding object: ' + str(controlType))
+            
         except Exception as ex:
             print('Error occurred while loading ', name)
             print(ex)
     
     return controls
 
-def getControlTarget(controlType:str, pinNumber: int):
-    controlTarget: targets.ControlTarget = None
-    if controlType == 'SolidStateRelay':
-        controlTarget = targets.SolidStateRelay(pinNumber)
-    elif controlType == 'Solenoid':
-        controlTarget = targets.Solenoid(pinNumber)
-    else:
-        raise Exception('Unknown controlType: ' + str(controlType))
-    return target
+def getControlTargets(targetDictionary: dict) -> list:
+    controlTargets: list = []
+    for controlTarget in targetDictionary:
+        name: str = str(controlTarget['name'])
+        pinNumber: int = int(controlTarget['pinNumber'])
+        controlType:str = str(controlTarget['type'])
+        
+        if controlType == 'SolidStateRelay':
+            newTarget: targets.SolidStateRelay = targets.SolidStateRelay(name, pinNumber)
+            controlTargets.append(newTarget)
+        elif controlType == 'Solenoid':
+            newTarget: targets.Solenoid = targets.Solenoid(name, pinNumber)
+            controlTargets.append(newTarget)
+        else:
+            log('Unknown control target type: ' + controlType)
+    
+    return controlTargets
 
-def getWifiConfig():
+def getWifiConfig() -> tuple:
     config: dict = None
     print('loading configuration for wifi ...')
     with open('wifi.json', 'r') as configFile:
         config: dict = json.load(configFile, 'r')
 
-    return config['ssid'], config['password']
+    return (config['ssid'], config['password'])
 
 def buildHtml():
     return None
@@ -77,9 +84,10 @@ def connectWifi(connectionType:str, ssid: str, wifiPass: str):
     print('Connection established')
     print('ifconfig = ' + str(accessPoint.ifconfig()))
 
-def runTimers():
+# loops through our controls as fast as it can
+def run():
     global controlLock
-    global config
+    global controls
     while True:
         with controlLock:
             for control in controls:
@@ -174,10 +182,10 @@ controlLock = _thread.allocate_lock()
 # load our configuration from file
 config = getConfigDictionary()
 ssid, password = getWifiConfig()
-controls = loadControls(config)       # TODO
+controls = loadControls(config)
 
 connectWifi(config.get('connectionType', 'station'), ssid, password)
-_thread.start_new_thread(runTimers, ())
+_thread.start_new_thread(run, ())
 runWebServer()                                                       # TODO
 
         
