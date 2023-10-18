@@ -62,33 +62,17 @@ class ControlTarget:
             self.pin.toggle()
 
 class SolidStateRelay(ControlTarget):
-    def __init__(self, pinNumber:int, name: str):
-        super().__init__(pinNumber, name)
+    def __init__(self, name: str, pinNumber: int):
+        super().__init__(name, pinNumber)
         self.pin.off()
     
     def __str__(self):
         return 'Solid State Relay, operating on pin ' + str(self.pinNumber)
 
 class Solenoid(ControlTarget):
-    def __init__(self, pinNumber: int, name: str):
-        super().__init__(pinNumber, name)
+    def __init__(self, name: str, pinNumber: int):
+        super().__init__(name, pinNumber)
         self.pin.on()
-    
+
     def __str__(self):
         return 'Solenoid, operating on pin ' + str(self.pinNumber)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
