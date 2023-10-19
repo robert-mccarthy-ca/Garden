@@ -5,26 +5,73 @@ import controllers
 import time
 import _thread
 import targets
+import urllib.parse
 from controllers import CycleTimer
 
 class GardenRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
-        # basic page no arguments
-        page: str = buildHtml()
-        
+        # build our parameters dictionary from the path. 
+        #   'name' contains the control name
+        #   'type' contains the Controller type
+        #   'operation' contains the operation type
+        #   the rest are the parameters for the Controller
+        parameters: dict = getParametersFromPath(self.path)
+        if len(parameters) > 1:
+            operation: str = parameters['operation']
+            if operation == 'update':
+                updateControl(parameters)
+            elif operation == 'new':
+                createControl(parameters)
+            elif operation == 'delete':
+                deleteControl(parameters)
+            else:
+                print('unknown operation:', operation)
+                # send error response back
+                self.send_response(400)
+                return
+          
+        # build and return the webpage unless we errored out above
+        # all valid GET requests to this server return this page
+        htmlPage: str = buildHtml()
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
-        self.send_header("Content-Length", str(len(page)))
+        self.send_header("Content-Length", str(len(htmlPage)))
         self.end_headers()
         self.wfile.write(page)
-        # pages with arguments
+    
+    def updateControl(self, parameters: dict):
+        
+        return None
+    
+    def createControl(self, parameters: dict):
+        
+        return None
+    
+    def deleteControl(self, parameters: dict):
+        
+        return None
+    
+    def getParametersFromPath(self, path: str) -> dict:
+        result: dict = {}
+        pathParts: list = path.split('?')
+        if len(pathParts) == 1:
+            return result
+        result['name'] = pathParts[0]
+        for queryPair: str in pathParts[1].split('&'):
+            queryParts = queryPair.split('=')
+            result[queryParts[0]] = queryParts[1]
+        return result
+    
+    def handle_error(self, msg: str):
+        do_GET()
     
 def buildHtml() -> str:
     result: str = '<!DOCTYPE html>\n'
     result += '<html lang="en">\n'
     result += '  <head>\n'
     result += '    <title>Hortus Deorum</title>\n'
-    result += '    <meta name="viewport" content="width=device-width, initial-scale=1" /><meta charset="UTF-8" />\n'
+    result += '    <meta name="viewport" content="width=device-width, initial-scale=1" />\n'
+    result += '    <meta charset="UTF-8" />\n'
     result += '    <style>\n'
     result += '      {\n'
     result += '        font-size: 50px;\n'
@@ -46,14 +93,14 @@ def buildHtml() -> str:
     return result
 
 def getConfigDictionary() -> dict:
-    config = None
+    config = {}
     print('loading configuration dictionary')
     with open('config.json', 'r') as configFile:
         config = json.load(configFile, 'r')
     return config
 
 def loadControls() -> dict:
-    config = getConfigDictionary()
+    config: dict = getConfigDictionary()
     controls: dict = {}
     print('configuring controls')
     for name in config:
