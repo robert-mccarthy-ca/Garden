@@ -39,9 +39,26 @@ class GardenRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(page)
     
-    def updateControl(self, parameters: dict):
-        
-        return None
+    # update an existing control
+    def updateControl(self, params: dict):
+        global controls
+        global controlLock
+        name: str = params['name']
+        if name in controls:
+            with controlLock:
+                control = controls[name]
+            type: str = params['type']
+            if type == 'CycleTimer':
+                onTime: int = int(params['onTime'])
+                control.setOnTime(onTime)
+                offTime: int = int(params['offTime'])
+                control.setOffTime(offTime)
+                startDelay: int = int(params['startDelay'])
+                control.setStartDelay(startDelay)
+            else:
+                print('unknown control type:', type)
+        else:
+            print('Invalid control name, not found:', name)
     
     def createControl(self, parameters: dict):
         
