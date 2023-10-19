@@ -1,8 +1,26 @@
+import BaseHTTPServer
 import json
+import requests
 import timers
 import time
 import _thread
 import targets
+
+class GardenRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    def do_GET(self):
+        page: str = buildHtml()
+        
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.send_header("Content-Length", str(len(page)))
+        self.end_headers()
+        self.wfile.write(page)
+    
+    def do_POST(self):
+        pass
+    
+    def buildHtml():
+        return None
 
 def getConfigDictionary() -> dict:
     config = None
@@ -11,7 +29,8 @@ def getConfigDictionary() -> dict:
         config = json.load(configFile, 'r')
     return config
 
-def loadControls(config: dict) -> dict:
+def loadControls() -> dict:
+    config = getConfigDictionary()
     controls: dict = {}
     print('configuring controls')
     for name in config:
@@ -62,9 +81,6 @@ def getWifiConfig() -> tuple:
 
     return (config['ssid'], config['password'])
 
-def buildHtml():
-    return None
-
 def connectWifi(connectionType:str, ssid: str, wifiPass: str):
     if connectionType == 'accessPoint':
         accessPoint = network.WLAN(network.AP_IF)
@@ -94,99 +110,25 @@ def run():
                 with control.lock:
                     control.tick()
 
-def getParameters(actionString):
-    print('debug start')
-    print(f'actionString: {actionString}')
-    parameters = actionString.split('?')
-    print(f'parameters: {parameters}')
-    if len(parameters) < 2 or len(parameters[1]) == 0:
-        return parameters[0], None
-    splitParameters = parameters[1].split('&')
-    print(f'splitParameters: {splitParameters}')
-    keys = []
-    values = []
-    
-    for index, parameter in enumerate(splitParameters):
-        print(f'index: {index}, parameter: {parameter}')
-        pair = parameter.split('=')
-        if pair == None or len(pair) < 2:
-            pass
-        keys.append(pair[0])
-        values.append(pair[1])
-        
-    result = dict(zip(keys, values))
-    print(f'result: {result}')
-    print('debug end')
-    return parameters[0], result
-
-def processRequest(request, client):
-    requestParts = request.split()
-    httpMethod = None
-    action = None
-    try:
-        httpMethod = requestParts[0]
-        action = requestParts[1]
-        print('http method = ' + str(httpMethod) + ', action = ' + str(action))
-    except IndexError:
-        pass
-    
-    parameters = getParameters(action)
-    target = parameters[0]
-    print('target: ', target)
-    dictionary = parameters[1]
-    print('actionDictionary:', dictionary)
-    
-    if target == '/reset':
-        for control in controls:
-            control.reset()
-    elif target[1:] in controls:
-        with control.lock:
-            control = controls[target[1:]]
-            control.update(dictionary)
-    
-    if httpMethod == 'GET':
-        if target == '/favicon.ico':
-            response = 'HTTP/1.1 404 Not Found\nConnection: close\n\n'
-        else:
-            response = buildHtml()
-        client.send(response)
-        print('returning html response to ', clientAddress, ':\n', response)
-
-def runWebServer():
-    serverAddress = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
-    serverSocket = socket.socket()
-    serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    serverSocket.bind(serverAddress)
-    serverSocket.listen(1)
-    print('listening on', serverAddress)
-    
-    while True:
-    try:
-        client, clientAddress = serverSocket.accept()
-        print('client connected from', clientAddress)
-        request = client.recv(1024)
-        requestString = request.decode('ASCII')
-        print('Content = %s' % requestString)
-        processRequest(requestString, client)
-        client.close()
-        
-    except OSError as e:
-        client.close()
-        print('connection closed')
-    except KeyboardInterrupt:
-        machine.reset()
-
 # for modifying controls across threads
 controlLock = _thread.allocate_lock()
 
 # load our configuration from file
-config = getConfigDictionary()
 ssid, password = getWifiConfig()
-controls = loadControls(config)
+controls = loadControls()
 
 connectWifi(config.get('connectionType', 'station'), ssid, password)
+webServer = HTTPServer((hostName, serverPort), GardenRequestHandler)
+print("Server started http://%s:%s" % ('localhost', 8080))  #Server starts
+
 _thread.start_new_thread(run, ())
-runWebServer()                                                       # TODO
+try:
+    webServer.serve_forever()
+except KeyboardInterrupt:
+    pass
+webServer.server_close()  #Executes when you hit a keyboard interrupt, closing the server
+print("Server stopped.")
+
 
         
      
