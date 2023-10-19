@@ -181,3 +181,20 @@ class CycleTimer(Controller):
         with self.lock:
             self.nextOnTime = self.currentTime + self.offset
             self.nextOffTime = None
+    
+    def toHtmlElement(self):
+        result = '    <form action="./' + self.name + '">\n'
+        result += '      <label for="onTime"> Time On (milliseconds)</label>\n'
+        result += '      <input type="text" id="onTime" name="onTime" value="' + self.onTime + '">\n'
+        result += '      <br>\n'
+        result += '      <label for="offTime"> Time Off (milliseconds)</label>\n'
+        result += '      <input type="text" id="offTime" name="offTime" value="' + self.offTime + '">\n'
+        result += '      <br>\n'
+        result += '      <label for="startDelay"> Start Delay (milliseconds)</label>\n'
+        result += '      <input type="text" id="startDelay" name="startDelay" value="' + self.startDelay + '">\n'
+        result += '      <br>\n'
+        result += '      <input type="submit" value="Submit">\n'
+        result += '      <br>\n'
+        result += '      <br>\n'
+        result += '    </form>\n'
+        return result

@@ -1,13 +1,15 @@
 import BaseHTTPServer
 import json
 import requests
-import timers
+import controllers
 import time
 import _thread
 import targets
+from controllers import CycleTimer
 
 class GardenRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
+        # basic page no arguments
         page: str = buildHtml()
         
         self.send_response(200)
@@ -15,12 +17,33 @@ class GardenRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(page)))
         self.end_headers()
         self.wfile.write(page)
+        # pages with arguments
     
-    def do_POST(self):
-        pass
+def buildHtml() -> str:
+    result: str = '<!DOCTYPE html>\n'
+    result += '<html lang="en">\n'
+    result += '  <head>\n'
+    result += '    <title>Hortus Deorum</title>\n'
+    result += '    <meta name="viewport" content="width=device-width, initial-scale=1" /><meta charset="UTF-8" />\n'
+    result += '    <style>\n'
+    result += '      {\n'
+    result += '        font-size: 50px;\n'
+    result += '        box-sizing: border-box;\n'
+    result += '      }\n'
+    result += '    </style>\n'
+    result += '  </head>\n'
+    result += '  <body>\n'
+    result += '    <h1>Hortus Deorum</h1>\n'
+    result += '    <hr>\n'
+
+    for control in controls:
+        result += control.toHtmlElement()
     
-    def buildHtml():
-        return None
+    result += '    <hr>\n'
+    result += '  </body>\n'
+    result += '</html>\n'
+    
+    return result
 
 def getConfigDictionary() -> dict:
     config = None
@@ -44,7 +67,7 @@ def loadControls() -> dict:
                 offTime: int = controlConfig['offTime']
                 offset: int = controlConfig['offset']
                 
-                control: timers.CycleTimer = timers.CycleTimer(name, onTime, offTime, offSet, controlTargets)
+                control: CycleTimer = CycleTimer(name, onTime, offTime, offSet, controlTargets)
                 controls[name] = control
             else:
                 raise Exception('Invalid configuration data, discarding object: ' + str(controlType))
@@ -101,7 +124,7 @@ def connectWifi(connectionType:str, ssid: str, wifiPass: str):
     print('ifconfig = ' + str(accessPoint.ifconfig()))
 
 # loops through our controls as fast as it can
-def run():
+def runControls():
     global controlLock
     global controls
     while True:
@@ -121,7 +144,7 @@ connectWifi(config.get('connectionType', 'station'), ssid, password)
 webServer = HTTPServer((hostName, serverPort), GardenRequestHandler)
 print("Server started http://%s:%s" % ('localhost', 8080))  #Server starts
 
-_thread.start_new_thread(run, ())
+_thread.start_new_thread(runControls, ())
 try:
     webServer.serve_forever()
 except KeyboardInterrupt:
