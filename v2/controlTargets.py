@@ -76,3 +76,5 @@ class Solenoid(ControlTarget):
 
     def __str__(self):
         return 'Solenoid, operating on pin ' + str(self.pinNumber)
+
+

@@ -1,14 +1,14 @@
 import _thread
 import time
 from machine import Pin
-from targets import ControlTarget
+from controlTargets import ControlTarget
 
 # sends commands to one or more ControlTarget objects
 # the ControlTarget determines if it is on or not, this class merely sends the commands
 # Controllers do not have exclusive access to ControlTargets
 # multiple Controllers can link to the same ControlTarget
 # can be triggered on/off, disabled/enabled, and told that time has passed
-class Controller:
+class Control:
     # Args:
     #   name: str - name of this Controller
     #   targets: list - a list of ControlTarget objects
@@ -86,7 +86,7 @@ class Controller:
 # - starts in the off state
 # - tick() must be called by someone else, either on a timer or a busy loop
 # - thread safe
-class CycleTimer(Controller):
+class CycleTimer(Control):
     # Args:
     #    name: str - display name for the timer
     #    onTime: int - on time in milliseconds
@@ -183,7 +183,9 @@ class CycleTimer(Controller):
             self.nextOffTime = None
     
     def toHtmlElement(self):
-        result = '    <form action="./' + self.name + '">\n'
+        result = '    <p>Control name: ' + self.name + '</p>'
+        result += '    <form action="./' + self.name + '">\n'
+        result += '      <input type="hidden" id="type" name="type" value="CycleTimer">\n'
         result += '      <label for="onTime"> Time On (milliseconds)</label>\n'
         result += '      <input type="text" id="onTime" name="onTime" value="' + self.onTime + '">\n'
         result += '      <br>\n'
@@ -193,7 +195,18 @@ class CycleTimer(Controller):
         result += '      <label for="startDelay"> Start Delay (milliseconds)</label>\n'
         result += '      <input type="text" id="startDelay" name="startDelay" value="' + self.startDelay + '">\n'
         result += '      <br>\n'
-        result += '      <input type="submit" value="Submit">\n'
+        
+        
+        
+      <label for="controlTarget">Choose control target type:</label>
+      <input list="controlTargets" name="controlTarget" id="controlTarget">
+      <label for="pin">Choose Pico W pin:</label>
+      <input list="pins" name="pin" id="pin">
+        
+        for target in self.targets:
+            
+        result += '      <br>\n'
+        result += '      <input type="submit" value="Update">\n'
         result += '      <br>\n'
         result += '      <br>\n'
         result += '    </form>\n'

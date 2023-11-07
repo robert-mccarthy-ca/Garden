@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Hortus Deorum</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+    <style>
+      {
+        font-size: 50px;
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Hortus Deorum</h1>
+    <hr>
+    <p>Control name: airLine   Control type: Solenoid</p>
+    <form action="./airLine">
+      <label for="onTime"> Time On (milliseconds)</label>
+      <input type="text" id="onTime" name="onTime" value="1000">
+      <br>
+      <label for="offTime"> Time Off (milliseconds)</label>
+      <input type="text" id="offTime" name="offTime" value="59000">
+      <br>
+      <label for="startDelay"> StartDelay (milliseconds)</label>
+      <input type="text" id="startDelay" name="startDelay" value="0">
+      <br>
+      <input type="submit" value="Update">
+      <br>
+      <br>
+	  <datalist id="controlTargets">
+	    <option value="">
+	    <option value="Solenoid">
+	    <option value="Relay">
+	  </datalist>
+	  <datalist id="pins">
+	    <option value="">
+	    <option value="15">
+	    <option value="16">
+	    <option value="17">
+	  </datalist>
+      <label for="controlTarget">Choose control target type:</label>
+      <input list="controlTargets" name="controlTarget" id="controlTarget">
+      <label for="pin">Choose Pico W pin:</label>
+      <input list="pins" name="pin" id="pin">
+    </form>
+    <hr>
+  </body>
+</html>

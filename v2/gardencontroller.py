@@ -4,7 +4,7 @@ import requests
 import controllers
 import time
 import _thread
-import targets
+import controlTargets
 import urllib.parse
 from controllers import CycleTimer
 
@@ -55,16 +55,23 @@ class GardenRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 control.setOffTime(offTime)
                 startDelay: int = int(params['startDelay'])
                 control.setStartDelay(startDelay)
+                # allow updates to targetList
             else:
                 print('unknown control type:', type)
         else:
             print('Invalid control name, not found:', name)
     
-    def createControl(self, parameters: dict):
-        
+    def createControl(self, params: dict):
+        type: str = params['type']
+        if type == 'CycleTimer':
+            onTime: int = int(params['onTime'])
+            offTime: int = int(params['offTime'])
+            startDelay: int = int(params['startDelay'])
+            name: str = params['name']
+            control: CycleTimer = CycleTimer(name, )
         return None
     
-    def deleteControl(self, parameters: dict):
+    def deleteControl(self, params: dict):
         
         return None
     
@@ -99,6 +106,18 @@ def buildHtml() -> str:
     result += '  <body>\n'
     result += '    <h1>Hortus Deorum</h1>\n'
     result += '    <hr>\n'
+
+    result += '    <datalist id="pins">'
+    result += '      <option value="">'
+    result += '      <option value="Solenoid">'
+    result += '      <option value="Relay">'
+    result += '    </datalist>'
+
+    result += '    <datalist id="controlTargets">'
+    result += '      <option value="">'
+    result += '      <option value="Solenoid">'
+    result += '      <option value="Relay">'
+    result += '    </datalist>'
 
     for control in controls:
         result += control.toHtmlElement()
