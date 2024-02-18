@@ -77,4 +77,10 @@ class Solenoid(ControlTarget):
     def __str__(self):
         return 'Solenoid, operating on pin ' + str(self.pinNumber)
 
-
+class MechanicalRelay(ControlTarget):
+    def __init__(self, name: str, pinNumber: int):
+        super().__init__(name, pinNumber)
+        self.pin.off()
+    
+    def __str__(self):
+        return 'Mechanical Relay, operating on pin ' + str(self.pinNumber)

@@ -116,7 +116,7 @@ class CycleTimer(Control):
         
         return p1 + p2 + p3 + p4 + p5
     
-    # sets self.on to True and turns on the targets
+    # sets self.on to False and turns off the target
     def off(self):
         super.off()
         with self.lock:
@@ -124,7 +124,7 @@ class CycleTimer(Control):
                 newTime: int = time.ticks_ms()
                 self.nextOnTime = newTime + self.offTime
     
-    # sets self.on to False and turns off the target
+    # sets self.on to True and turns on the targets
     def on(self):
         super.on()
         with self.lock:
@@ -145,12 +145,12 @@ class CycleTimer(Control):
             else:
                 # time to turn on
                 if not self.on and self.lastTickTime >= self.nextOnTime:
-                    on()
+                    self.on()
                     log('turning on at time ' + str(self.lastTickTime))
                     self.nextOffTime = self.lastTickTime + self.onTime
                 # time to turn off
-                elif self.on and self.currelastTickTimentTime >= self.nextOffTime:
-                    off()
+                elif self.on and self.lastTickTime >= self.nextOffTime:
+                    self.off()
                     log('turning off at time ' + str(self.lastTickTime))
                     self.nextOnTime = self.lastTickTime + self.offTime
     
@@ -183,31 +183,70 @@ class CycleTimer(Control):
             self.nextOffTime = None
     
     def toHtmlElement(self):
-        result = '    <p>Control name: ' + self.name + '</p>'
-        result += '    <form action="./' + self.name + '">\n'
-        result += '      <input type="hidden" id="type" name="type" value="CycleTimer">\n'
-        result += '      <label for="onTime"> Time On (milliseconds)</label>\n'
-        result += '      <input type="text" id="onTime" name="onTime" value="' + self.onTime + '">\n'
-        result += '      <br>\n'
-        result += '      <label for="offTime"> Time Off (milliseconds)</label>\n'
-        result += '      <input type="text" id="offTime" name="offTime" value="' + self.offTime + '">\n'
-        result += '      <br>\n'
-        result += '      <label for="startDelay"> Start Delay (milliseconds)</label>\n'
-        result += '      <input type="text" id="startDelay" name="startDelay" value="' + self.startDelay + '">\n'
-        result += '      <br>\n'
-        
-        
-        
-      <label for="controlTarget">Choose control target type:</label>
-      <input list="controlTargets" name="controlTarget" id="controlTarget">
-      <label for="pin">Choose Pico W pin:</label>
-      <input list="pins" name="pin" id="pin">
-        
-        for target in self.targets:
-            
-        result += '      <br>\n'
-        result += '      <input type="submit" value="Update">\n'
-        result += '      <br>\n'
-        result += '      <br>\n'
-        result += '    </form>\n'
+        result = None
         return result
+
+class OnTrigger(Control):
+    def __init__(self, name: str, duration: int, trigger: ControlInput, targets: list):
+        super().__init__(name, targets)
+        self.duration: int = duration
+        self.input = trigger
+        self.nextOffTime = None
+        
+    def __str__(self) -> str:
+        p1: str = 'OnTrigger: (' + str(self.name) + ', '
+        p2: str = 'duration: ' + str(self.duration) + ', '
+        p3: str = 'controlTargets: ' + str(self.targets) + ')'
+        
+        return p1 + p2 + p3
+    
+    def tick(self):
+        super.tick()
+        with self.lock:
+            if self.disabled:
+                pass
+            if self.input.isOn():
+                if self.nextOffTime is None:
+                    self.on()
+                self.nextOffTime = self.lastTickTime + self.duration
+            elif self.nextOffTime is not None:
+                if self.nextOffTime <= self.lastTickTime:
+                    self.off()
+                    self.lastTickTime = None
+    
+    def reset(self):
+        super.reset()
+        with self.lock:
+            self.nextOffTime = None
+    
+    def toHtmlElement(self):
+        result = None
+        return result 
+
+# as it is a disable switch itself, cannot be disabled, only turned on (disable whatever it is connected to) or off (enabled)
+class KillSwitch(Control):
+    def __init__(self, name: str, targets: list):
+        super().__init__(name, targets)
+        self.active = False
+    
+    def on(self):
+        super.on()
+        with self.lock:
+            if self.on and not self.active:
+                self.active = True
+                self.disable()
+            elif not self.on and self.active:
+                self.active = False
+                self.enable()
+    
+    def off(self):
+        super.off()
+        with self.lock:
+            if not self.on and self.active:
+                self.active = False
+                self.enable()
+    
+    def tick(self):
+        super.tick()
+        
+        with self.lock:

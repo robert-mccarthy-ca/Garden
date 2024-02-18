@@ -72,7 +72,6 @@ class GardenRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return None
     
     def deleteControl(self, params: dict):
-        
         return None
     
     def getParametersFromPath(self, path: str) -> dict:
@@ -90,94 +89,47 @@ class GardenRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         do_GET()
     
 def buildHtml() -> str:
-    result: str = '<!DOCTYPE html>\n'
-    result += '<html lang="en">\n'
-    result += '  <head>\n'
-    result += '    <title>Hortus Deorum</title>\n'
-    result += '    <meta name="viewport" content="width=device-width, initial-scale=1" />\n'
-    result += '    <meta charset="UTF-8" />\n'
-    result += '    <style>\n'
-    result += '      {\n'
-    result += '        font-size: 50px;\n'
-    result += '        box-sizing: border-box;\n'
-    result += '      }\n'
-    result += '    </style>\n'
-    result += '  </head>\n'
-    result += '  <body>\n'
-    result += '    <h1>Hortus Deorum</h1>\n'
-    result += '    <hr>\n'
-
-    result += '    <datalist id="pins">'
-    result += '      <option value="">'
-    result += '      <option value="Solenoid">'
-    result += '      <option value="Relay">'
-    result += '    </datalist>'
-
-    result += '    <datalist id="controlTargets">'
-    result += '      <option value="">'
-    result += '      <option value="Solenoid">'
-    result += '      <option value="Relay">'
-    result += '    </datalist>'
-
-    for control in controls:
-        result += control.toHtmlElement()
-    
-    result += '    <hr>\n'
-    result += '  </body>\n'
-    result += '</html>\n'
+    result: str = ''
     
     return result
 
-def getConfigDictionary() -> dict:
-    config = {}
-    print('loading configuration dictionary')
-    with open('config.json', 'r') as configFile:
-        config = json.load(configFile, 'r')
-    return config
-
 def loadControls() -> dict:
-    config: dict = getConfigDictionary()
+    mechanicalRelays: dict = {}
+    mechanicalRelays[0] = MechanicalRelay('Air Solenoid Relay (All)', 0)
+    
+    mechanicalRelays[1] = MechanicalRelay('Sump Relay A', 1)
+    mechanicalRelays[2] = MechanicalRelay('AAA Nutrient Pump Relay A', 2)
+    mechanicalRelays[3] = MechanicalRelay('LPA Nutrient Pump Relay A', 3)
+    
+    mechanicalRelays[4] = MechanicalRelay('Sump Relay B', 4)
+    mechanicalRelays[5] = MechanicalRelay('AAA Nutrient Pump Relay B', 5)
+    mechanicalRelays[6] = MechanicalRelay('LPA Nutrient Pump Relay B', 6)
+    
+    mechanicalRelays[7] = MechanicalRelay('Sump Relay C', 7)
+    mechanicalRelays[8] = MechanicalRelay('AAA Nutrient Pump Relay C', 8)
+    mechanicalRelays[9] = MechanicalRelay('LPA Nutrient Pump Relay C', 9)
+    
+    inputSwitches: dict = {}
+    inputSwitches[16] = Trigger('Sump A Float Switch', 16)
+    inputSwitches[17] = Trigger('Sump B Float Switch', 17)
+    inputSwitches[18] = Trigger('Sump C Float Switch', 18)
+    
     controls: dict = {}
-    print('configuring controls')
-    for name in config:
-        try:
-            controlConfig: dict = config[name]
-            controlType: str = str(controlConfig['controlType'])
-            controlTargets: list = getControlTargets(controlConfig['controlTargets'])
-                
-            if 'CycleTimer' == controlType:
-                onTime: int = controlConfig['onTime']
-                offTime: int = controlConfig['offTime']
-                offset: int = controlConfig['offset']
-                
-                control: CycleTimer = CycleTimer(name, onTime, offTime, offSet, controlTargets)
-                controls[name] = control
-            else:
-                raise Exception('Invalid configuration data, discarding object: ' + str(controlType))
-            
-        except Exception as ex:
-            print('Error occurred while loading ', name)
-            print(ex)
+    controls['Air Solenoid (All)'] = CycleTimer(name='Air Solenoid (All)', onTime=1000, offTime=59000, offset=1000, targets=[mechanicalRelays[0]])
+    
+    controls['Sump Pump A'] = OnTrigger(name='Sump Pump A', duration=15000, trigger=inputSwitches[16], targets=[mechanicalRelays[1]])
+    controls['AAA Nutrient Pump A'] = CycleTimer(name='AAA Nutrient Pump A', onTime=2000, offTime=58000, offset=0, targets=[mechanicalRelays[2]])
+    controls['LPA Nutrient Pump A'] = CycleTimer(name='LPA Nutrient Pump A', onTime=30000, offTime=3570000, offset=0, targets=[mechanicalRelays[3]])
+    
+    controls['Sump Pump B'] = OnTrigger(name='Sump Pump B', duration=15000, trigger=inputSwitches[17], targets=[mechanicalRelays[4]])
+    controls['AAA Nutrient Pump B'] = CycleTimer(name='AAA Nutrient Pump B', onTime=2000, offTime=58000, offset=0, targets=[mechanicalRelays[5]])
+    controls['LPA Nutrient Pump B'] = CycleTimer(name='LPA Nutrient Pump B', onTime=30000, offTime=3570000, offset=0, targets=[mechanicalRelays[6]])
+    
+    controls['Sump Pump C'] = OnTrigger(name='Sump Pump C', duration=15000, trigger=inputSwitches[18], targets=[mechanicalRelays[7]])
+    controls['AAA Nutrient Pump C'] = CycleTimer(name='AAA Nutrient Pump C', onTime=2000, offTime=58000, offset=0, targets=[mechanicalRelays[8]])
+    controls['LPA Nutrient Pump C'] = CycleTimer(name='LPA Nutrient Pump C', onTime=30000, offTime=3570000, offset=0, targets=[mechanicalRelays[9]])
     
     return controls
-
-def getControlTargets(targetDictionary: dict) -> list:
-    controlTargets: list = []
-    for controlTarget in targetDictionary:
-        name: str = str(controlTarget['name'])
-        pinNumber: int = int(controlTarget['pinNumber'])
-        controlType:str = str(controlTarget['type'])
-        
-        if controlType == 'SolidStateRelay':
-            newTarget: targets.SolidStateRelay = targets.SolidStateRelay(name, pinNumber)
-            controlTargets.append(newTarget)
-        elif controlType == 'Solenoid':
-            newTarget: targets.Solenoid = targets.Solenoid(name, pinNumber)
-            controlTargets.append(newTarget)
-        else:
-            log('Unknown control target type: ' + controlType)
-    
-    return controlTargets
 
 def getWifiConfig() -> tuple:
     config: dict = None
