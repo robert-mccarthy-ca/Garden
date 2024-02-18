@@ -8,6 +8,7 @@ from controlTargets import ControlTarget
 # Controllers do not have exclusive access to ControlTargets
 # multiple Controllers can link to the same ControlTarget
 # can be triggered on/off, disabled/enabled, and told that time has passed
+# base class is threadsafe
 class Control:
     # Args:
     #   name: str - name of this Controller
@@ -23,6 +24,7 @@ class Control:
         self.lastTickLength: int = 0
     
     # disables targets in targetList
+    # called from webserver thread
     def disable(self):
         with self.lock:
             if not self.disabled:
@@ -32,6 +34,7 @@ class Control:
         log('Controller disabled')
     
     # re-enables targets in targetList
+    # called from webserver thread
     def enable(self):
         with self.lock:
             if self.disabled:
@@ -43,6 +46,7 @@ class Control:
         log('Controller re-enabled')
     
     # Turns on targets in targetList
+    # called from control thread within tick()
     def on(self):
         with self.lock:
             if not self.on:
@@ -52,6 +56,7 @@ class Control:
         log('Controller turned on')
     
     # Turns off targets in targetList
+    # called from control thread within tick()
     def off(self):
         with self.lock:
             if self.on:
@@ -61,6 +66,7 @@ class Control:
         log('Controller turned off')
 
     # Controller notifying us that time has elapsed and to update ourselves accordingly
+    # called from the control thread
     def tick(self):
         newTime = timer.ticks_ms()
         with self.lock:
@@ -68,16 +74,15 @@ class Control:
             self.lastTickTime = newTime
     
     # reset the control
+    # called from webserver thread
     def reset(self):
-        if self.on:
-            off()
-        if self.disabled:
-            enable
-        log('Controller reset')
+        with self.lock:
+            if self.on:
+                off()
+            log('Controller reset')
 
     # Args:
-    #   message: str - message to log, appended to the logPrefix with a timestamp
-    def log(self, message: str):
+    #   message: str - message to log, appended to the logPrefix with a timestamp    def log(self, message: str):
         print(self.logPrefix, time.time(), ' - ', message)
     
 # Cycle Timer will turn on for onTime duration, then off for offTime duration, starting at the offset and repeating forever
@@ -117,6 +122,7 @@ class CycleTimer(Control):
         return p1 + p2 + p3 + p4 + p5
     
     # sets self.on to False and turns off the target
+    # called from control thread within tick()
     def off(self):
         super.off()
         with self.lock:
@@ -125,6 +131,7 @@ class CycleTimer(Control):
                 self.nextOnTime = newTime + self.offTime
     
     # sets self.on to True and turns on the targets
+    # called from control thread within tick()
     def on(self):
         super.on()
         with self.lock:
@@ -133,6 +140,7 @@ class CycleTimer(Control):
                 self.nextOffTime = newTime + self.onTime
         
     # time has passed, do our thing if we need to
+    # called from control thread
     def tick(self):
         super.tick()
         
@@ -156,6 +164,7 @@ class CycleTimer(Control):
     
     # Args:
     #   newTime: int - set onTime to newTime
+    # called from webserver thread
     def setOnTime(self, newTime: int):
         with self.lock:
             self.onTime = newTime
@@ -163,6 +172,7 @@ class CycleTimer(Control):
     
     # Args:
     #   newTime: int - set offTime to newTime
+    # called from webserver thread
     def setOffTime(self, newTime: int):
         with self.lock:
             self.offTime = newTime
@@ -170,21 +180,23 @@ class CycleTimer(Control):
     
     # Args:
     #   newTime: int - set offset to newTime
+    # called from webserver thread
     def setOffset(self, newTime: int):
         with self.lock:
             self.offset = newTime
         log('offset set to ' + str(newTime/1000) + ' seconds')
     
     # resets to starting settings, turning targets off and starting from offset just like a restart
+    # called from webserver thread
     def reset(self):
         super.reset()
         with self.lock:
             self.nextOnTime = self.currentTime + self.offset
             self.nextOffTime = None
     
+    # called from webserver thread
     def toHtmlElement(self):
-        result = None
-        return result
+        return ''
 
 class OnTrigger(Control):
     def __init__(self, name: str, duration: int, trigger: ControlInput, targets: list):
@@ -200,6 +212,7 @@ class OnTrigger(Control):
         
         return p1 + p2 + p3
     
+    # called from control thread
     def tick(self):
         super.tick()
         with self.lock:
@@ -214,39 +227,12 @@ class OnTrigger(Control):
                     self.off()
                     self.lastTickTime = None
     
+    # called from webserver thread
     def reset(self):
         super.reset()
         with self.lock:
             self.nextOffTime = None
     
+    # called from webserver thread
     def toHtmlElement(self):
-        result = None
-        return result 
-
-# as it is a disable switch itself, cannot be disabled, only turned on (disable whatever it is connected to) or off (enabled)
-class KillSwitch(Control):
-    def __init__(self, name: str, targets: list):
-        super().__init__(name, targets)
-        self.active = False
-    
-    def on(self):
-        super.on()
-        with self.lock:
-            if self.on and not self.active:
-                self.active = True
-                self.disable()
-            elif not self.on and self.active:
-                self.active = False
-                self.enable()
-    
-    def off(self):
-        super.off()
-        with self.lock:
-            if not self.on and self.active:
-                self.active = False
-                self.enable()
-    
-    def tick(self):
-        super.tick()
-        
-        with self.lock:
+        return ''

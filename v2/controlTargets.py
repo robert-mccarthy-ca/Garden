@@ -61,22 +61,7 @@ class ControlTarget:
         if wasDisabled and not disabledNow and self.on:
             self.pin.toggle()
 
-class SolidStateRelay(ControlTarget):
-    def __init__(self, name: str, pinNumber: int):
-        super().__init__(name, pinNumber)
-        self.pin.off()
-    
-    def __str__(self):
-        return 'Solid State Relay, operating on pin ' + str(self.pinNumber)
-
-class Solenoid(ControlTarget):
-    def __init__(self, name: str, pinNumber: int):
-        super().__init__(name, pinNumber)
-        self.pin.on()
-
-    def __str__(self):
-        return 'Solenoid, operating on pin ' + str(self.pinNumber)
-
+# not thread safe
 class MechanicalRelay(ControlTarget):
     def __init__(self, name: str, pinNumber: int):
         super().__init__(name, pinNumber)

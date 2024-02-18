@@ -9,12 +9,12 @@ class ControlInput:
     def isOn(self):
         return self.pin.value() == 1
 
-# just a basic control, is on when pressed, only exists to provide a user friendly name
+# on or off
 class Button(ControlInput):
     def __init__(self, name: str, pinNumber: int):
         super().__init__(name, pinNumber)
 
-# just a basic control, is on when pressed, only exists to provide a user friendly name
-class Trigger(ControlInput):
+# on or off
+class Switch(ControlInput):
     def __init__(self, name: str, pinNumber: int):
         super().__init__(name, pinNumber)
