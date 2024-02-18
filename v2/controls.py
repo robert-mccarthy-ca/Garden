@@ -196,7 +196,16 @@ class CycleTimer(Control):
     
     # called from webserver thread
     def toHtmlElement(self):
-        return ''
+        return f"""
+        <div>
+            <h3>{self.name} - CycleTimer</h3>
+            <p>On Duration: {self.onDuration} ms</p>
+            <p>Off Duration: {self.offDuration} ms</p>
+            <p>Offset: {self.offset} ms</p>
+            <a href="/control?action=update&type=CycleTimer&name={self.name}">Update</a>
+            <a href="/control?action=reset&type=CycleTimer&name={self.name}">Reset</a>
+        </div>
+        """
 
 class OnTrigger(Control):
     def __init__(self, name: str, duration: int, trigger: ControlInput, targets: list):
@@ -235,4 +244,11 @@ class OnTrigger(Control):
     
     # called from webserver thread
     def toHtmlElement(self):
-        return ''
+        return f"""
+        <div>
+            <h3>{self.name} - OnTrigger</h3>
+            <p>On Duration: {self.duration} ms</p>
+            <a href="/control?action=update&type=OnTrigger&name={self.name}">Update</a>
+            <a href="/control?action=reset&type=OnTrigger&name={self.name}">Reset</a>
+        </div>
+        """
