@@ -55,42 +55,9 @@ class GardenRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             control.update(params)
         elif action == 'reset':
             control.reset()
-        elif action == 'pause':
+        elif action == 'Pause':
             control.disable()
-        elif action == 'resume':
+        elif action == 'Resume':
             control.enable()
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-    
-    # update an existing control
-    def updateControl(self, params: dict):
-        global controls
-        global controlLock
-        name: str = params['name']
-        if name in controls:
-            with controlLock:
-                control = controls[name]
-            type: str = params['type']
-            if type == 'CycleTimer':
-                onTime: int = int(params['onTime'])
-                control.setOnTime(onTime)
-                offTime: int = int(params['offTime'])
-                control.setOffTime(offTime)
-                startDelay: int = int(params['startDelay'])
-                control.setStartDelay(startDelay)
-                # allow updates to targetList
-            else:
-                print('unknown control type:', type)
         else:
-            print('Invalid control name, not found:', name)
-    
+            print('Invalid action, not found:', action)
