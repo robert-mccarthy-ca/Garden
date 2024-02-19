@@ -162,6 +162,20 @@ class CycleTimer(Control):
                     log('turning off at time ' + str(self.lastTickTime))
                     self.nextOnTime = self.lastTickTime + self.offTime
     
+    def update(self, params: dict):
+        with self.lock:
+            try:
+                # these will throw exceptions if we don't have valid values
+                newOnTime = int(params['onTime'])
+                newOffTime = int(params['offTime'])
+                newOffset = int(params['offset'])
+                # only if all three values are valid do we make any changes
+                self.onTime = newOnTime
+                self.offTime = newOffTime
+                self.offset = newOffset
+            except:
+                log('invalid values for params' + str(params))
+    
     # Args:
     #   newTime: int - set onTime to newTime
     # called from webserver thread
@@ -196,17 +210,35 @@ class CycleTimer(Control):
     
     # called from webserver thread
     def toHtmlElement(self):
+        pauseOrResume = 'Resume' if self.disabled else 'Pause'
         return f"""
         <div>
             <h3>{self.name} - CycleTimer</h3>
-            <p>On Duration: {self.onDuration} ms</p>
-            <p>Off Duration: {self.offDuration} ms</p>
+            <p>On Duration: {self.onTime} ms</p>
+            <p>Off Duration: {self.offTime} ms</p>
             <p>Offset: {self.offset} ms</p>
-            <a href="/control?action=update&type=CycleTimer&name={self.name}">Update</a>
-            <a href="/control?action=reset&type=CycleTimer&name={self.name}">Reset</a>
+            <form action="/control" method="GET">
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="name" value="{self.name}">
+                <label for="onTime">On Duration:</label>
+                <input type="text" name="onTime" value="{self.onTime}">
+                <br>
+                <label for="offTime">Off Duration:</label>
+                <input type="text" name="offTime" value="{self.offTime}">
+                <br>
+                <label for="offset">Offset:</label>
+                <input type="text" name="offset" value="{self.offset}">
+                <br>
+                <input type="submit" value="Update">
+            </form>
+            <a href="/control?action=reset&name={self.name}">Reset</a>
+            <a href="/control?action={pauseOrResume}&name={self.name}">{pauseOrResume}</a>
         </div>
         """
 
+# turns on when the trigger/switch/button is on
+# stays on for duration milliseconds
+# threadsafe
 class OnTrigger(Control):
     def __init__(self, name: str, duration: int, trigger: ControlInput, targets: list):
         super().__init__(name, targets)
@@ -236,6 +268,16 @@ class OnTrigger(Control):
                     self.off()
                     self.lastTickTime = None
     
+    def update(self, params: dict):
+        with self.lock:
+            try:
+                # this will throw exceptions if we don't have valid values
+                newDuration = int(params['duration'])
+                # only if valid do we make any changes
+                self.duration = newDuration
+            except:
+                log('invalid values for params' + str(params))
+    
     # called from webserver thread
     def reset(self):
         super.reset()
@@ -244,11 +286,20 @@ class OnTrigger(Control):
     
     # called from webserver thread
     def toHtmlElement(self):
+        pauseOrResume = 'Resume' if self.disabled else 'Pause'
         return f"""
         <div>
             <h3>{self.name} - OnTrigger</h3>
             <p>On Duration: {self.duration} ms</p>
-            <a href="/control?action=update&type=OnTrigger&name={self.name}">Update</a>
-            <a href="/control?action=reset&type=OnTrigger&name={self.name}">Reset</a>
+            <form action="/control" method="GET">
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="name" value="{self.name}">
+                <label for="duration">On Duration:</label>
+                <input type="text" name="duration" value="{self.duration}">
+                <br>
+                <input type="submit" value="Update">
+            </form>
+            <a href="/control?action=reset&name={self.name}">Reset</a>
+            <a href="/control?action={pauseOrResume}&name={self.name}">{pauseOrResume}</a>
         </div>
         """

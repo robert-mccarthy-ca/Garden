@@ -1,21 +1,14 @@
 import BaseHTTPServer
 import json
 import requests
-import controllers
 import time
 import _thread
-import controlTargets
 import urllib.parse
 
 from controllers import CycleTimer, OnTrigger
 from controlInputs import Switch
 from controlTargets import MechanicalRelay
 from gardenRequestHandler import GardenRequestHandler
-
-def buildHtml() -> str:
-    result: str = ''
-    
-    return result
 
 def loadControls() -> dict:
     mechanicalRelays: dict = {}
@@ -108,7 +101,9 @@ try:
     webServer.serve_forever()
 except KeyboardInterrupt:
     pass
-webServer.server_close()  #Executes when you hit a keyboard interrupt, closing the server
+
+# Executes when you hit a keyboard interrupt, closing the server
+webServer.server_close()
 print("Server stopped.")
 
 
